@@ -68,6 +68,19 @@ export interface SubmitInvoiceInput {
 
 type Side = "moto" | "uke" | null;
 
+/**
+ * 一覧・詳細でのステータス表示用の意味づけ。色（ki/midori/aka/usu）はUIの責務なので
+ * ここでは返さない（domainはUIに依存しない）。
+ */
+export type TxDisplayStatus = "awaiting_acceptance" | "in_progress" | "completion_requested" | "completed" | "cancelled";
+
+export function transactionDisplayStatus(status: TransactionStatus, orders: Order[]): TxDisplayStatus {
+  if (status === "completed") return "completed";
+  if (status === "cancelled") return "cancelled";
+  if (status === "completion_requested") return "completion_requested";
+  return orders.some(isPending) ? "awaiting_acceptance" : "in_progress";
+}
+
 let idSeq = 0;
 /** テストや呼び出し側でIDを指定しない場合の採番。本番はDB側のUUID採番を使う。 */
 function nextId(prefix: string): string {

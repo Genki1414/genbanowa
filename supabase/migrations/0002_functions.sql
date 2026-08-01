@@ -1,22 +1,74 @@
 -- ゲンバノワ 特権処理・共通関数
 -- 出典: docs/01_実装設計書.md 1-10章・2章、docs/04_権限ロール設計.md
 
--- 現在ログイン中のユーザーが属する会社
+-- 現在ログイン中のユーザーが属する会社。
+-- users テーブルのRLSポリシー自体がこの関数を使うため、SECURITY DEFINER で
+-- RLSを経由せずに自分の行を引く（そうしないと users への select が無限再帰する）。
 create or replace function my_company()
 returns uuid
 language sql
 stable
+security definer
+set search_path = public
 as $$
   select company_id from users where id = auth.uid();
 $$;
 
--- 現在ログイン中のユーザーのロール
+-- 現在ログイン中のユーザーのロール。理由は my_company() と同じ。
 create or replace function my_role()
 returns text
 language sql
 stable
+security definer
+set search_path = public
 as $$
   select role from users where id = auth.uid();
+$$;
+
+-- 取引の当事者（発注側 or 受注側）かどうか。SECURITY DEFINER で transactions を
+-- RLSを経由せずに読むことで、transactions・orders・invoices 等の相互参照ポリシーが
+-- 循環して "infinite recursion detected in policy" にならないようにする。
+create or replace function is_tx_party(p_transaction_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from transactions t
+    where t.id = p_transaction_id
+      and (t.moto_company = my_company() or t.uke_company = my_company())
+  );
+$$;
+
+-- field ロールが担当として割り当てられた取引かどうか
+create or replace function is_tx_field_assigned(p_transaction_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from site_assignments sa
+    where sa.transaction_id = p_transaction_id and sa.user_id = auth.uid()
+  );
+$$;
+
+-- 取引（および紐づく注文書・日報・請求書等）を閲覧できるか。
+-- field は割り当てられた取引だけ、それ以外は自社が当事者の取引すべて。
+create or replace function can_see_transaction(p_transaction_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select case my_role()
+    when 'field' then is_tx_field_assigned(p_transaction_id)
+    else is_tx_party(p_transaction_id)
+  end;
 $$;
 
 -- 住所文字列から都道府県だけを取り出す（companies_public ビューで使用）
@@ -28,16 +80,23 @@ as $$
   select coalesce(substring(addr from '^.{2,3}?[都道府県]'), addr);
 $$;
 
--- 段階開放。追加のみ。同じキーを何度呼んでも増えない（冪等）
+-- 段階開放。追加のみ。同じキーを何度呼んでも増えない（冪等）。
+-- SECURITY DEFINER で RLS を経由しないため、自社以外を書き換えられないようここでガードする。
 create or replace function unlock_feature(p_company uuid, p_key text)
 returns void
-language sql
+language plpgsql
 security definer
 set search_path = public
 as $$
+begin
+  if p_company is distinct from my_company() then
+    raise exception 'forbidden';
+  end if;
+
   update companies
      set unlocked_features = array(select distinct unnest(unlocked_features || p_key))
    where id = p_company;
+end;
 $$;
 
 -- スカウト・見積依頼の閲覧ポイント消費（無料プラン用）。
@@ -55,6 +114,9 @@ begin
   select * into v_scout from scouts where id = p_scout_id for update;
   if v_scout.id is null then
     return;
+  end if;
+  if v_scout.to_company is distinct from my_company() then
+    raise exception 'forbidden';
   end if;
   if v_scout.opened_at is not null then
     return; -- 既に消費済み
@@ -134,3 +196,31 @@ begin
      and status not in ('recorded', 'resolved'); -- 確定済みへの二重適用を防ぐ
 end;
 $$;
+
+-- ============================================================
+-- 実行権限
+-- ============================================================
+-- Postgresは create function すると既定で PUBLIC に EXECUTE を許可してしまう。
+-- SECURITY DEFINER 関数はRLSを経由しないため、これを許したままだと anon/authenticated が
+-- 何でも呼べてしまう。まず全部はがして、必要なものだけ authenticated に渡す。
+
+revoke execute on function my_company() from public;
+revoke execute on function my_role() from public;
+revoke execute on function is_tx_party(uuid) from public;
+revoke execute on function is_tx_field_assigned(uuid) from public;
+revoke execute on function can_see_transaction(uuid) from public;
+revoke execute on function unlock_feature(uuid, text) from public;
+revoke execute on function consume_invite_point(uuid) from public;
+revoke execute on function recalc_trust_score(uuid) from public;
+revoke execute on function record_payment_delay(uuid, text, text) from public;
+
+grant execute on function my_company() to authenticated;
+grant execute on function my_role() to authenticated;
+grant execute on function is_tx_party(uuid) to authenticated;
+grant execute on function is_tx_field_assigned(uuid) to authenticated;
+grant execute on function can_see_transaction(uuid) to authenticated;
+grant execute on function unlock_feature(uuid, text) to authenticated;
+grant execute on function consume_invite_point(uuid) to authenticated;
+-- recalc_trust_score と record_payment_delay は authenticated に渡さない。
+-- 前者はサーバー側（service role）から取引完了・書類承認のタイミングで呼ぶ。
+-- 後者は運営専用（アプリ層で運営ロールを確認した上で service role から呼ぶ）。

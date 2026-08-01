@@ -122,105 +122,69 @@ create policy messages_parties_insert on messages for insert
 -- ============================================================
 -- 取引（金額の列レベル秘匿はここでは行わない。Server Action で stripAmounts()）
 -- ============================================================
+--
+-- orders / order_requests / daily_reports / invoices / payment_disputes / site_assignments は
+-- どれも「transactions の当事者かどうか」を問い合わせて可否を決める。この相互参照を生の
+-- 相関サブクエリで書くと、テーブルをまたいだRLSポリシーの展開が循環し
+-- "infinite recursion detected in policy" になる。is_tx_party() / can_see_transaction() は
+-- SECURITY DEFINER で transactions を RLSを経由せずに読むため、循環を断ち切れる。
+--
+-- SELECT は can_see_transaction()（field は担当のみ）、書き込みは is_tx_party()
+-- （会社単位。field が書けるかどうかの細かい制御は can() を使う Server Action の役目）で統一する。
 
 alter table transactions enable row level security;
 
--- field ロールは site_assignments にある取引だけが見える
-create policy tx_scope_select on transactions for select using (
-  case my_role()
-    when 'field' then exists (
-      select 1 from site_assignments sa
-      where sa.transaction_id = transactions.id and sa.user_id = auth.uid()
-    )
-    else moto_company = my_company() or uke_company = my_company()
-  end
-);
+create policy tx_scope_select on transactions for select
+  using (can_see_transaction(id));
 
-create policy tx_parties_write on transactions for all
-  using (moto_company = my_company() or uke_company = my_company())
-  with check (moto_company = my_company() or uke_company = my_company());
+create policy tx_parties_write on transactions for insert with check (is_tx_party(id));
+create policy tx_parties_update on transactions for update
+  using (is_tx_party(id)) with check (is_tx_party(id));
 
 alter table orders enable row level security;
 
-create policy orders_tx_parties on orders for all
-  using (
-    exists (
-      select 1 from transactions t
-      where t.id = orders.transaction_id
-        and (t.moto_company = my_company() or t.uke_company = my_company())
-    )
-  );
+create policy orders_scope_select on orders for select using (can_see_transaction(transaction_id));
+create policy orders_parties_write on orders for insert with check (is_tx_party(transaction_id));
+create policy orders_parties_update on orders for update
+  using (is_tx_party(transaction_id)) with check (is_tx_party(transaction_id));
 
 alter table order_requests enable row level security;
 
-create policy order_requests_tx_parties on order_requests for all
-  using (
-    exists (
-      select 1 from transactions t
-      where t.id = order_requests.transaction_id
-        and (t.moto_company = my_company() or t.uke_company = my_company())
-    )
-  );
+create policy order_requests_scope_select on order_requests for select using (can_see_transaction(transaction_id));
+create policy order_requests_parties_write on order_requests for insert with check (is_tx_party(transaction_id));
+create policy order_requests_parties_update on order_requests for update
+  using (is_tx_party(transaction_id)) with check (is_tx_party(transaction_id));
 
 alter table daily_reports enable row level security;
 
-create policy daily_reports_tx_scope on daily_reports for select using (
-  exists (
-    select 1 from transactions t
-    where t.id = daily_reports.transaction_id
-      and (
-        case my_role()
-          when 'field' then exists (
-            select 1 from site_assignments sa
-            where sa.transaction_id = t.id and sa.user_id = auth.uid()
-          )
-          else t.moto_company = my_company() or t.uke_company = my_company()
-        end
-      )
-  )
-);
-
-create policy daily_reports_tx_write on daily_reports for insert with check (
-  exists (
-    select 1 from transactions t
-    where t.id = daily_reports.transaction_id
-      and (t.moto_company = my_company() or t.uke_company = my_company())
-  )
-);
+create policy daily_reports_scope_select on daily_reports for select using (can_see_transaction(transaction_id));
+create policy daily_reports_parties_write on daily_reports for insert with check (is_tx_party(transaction_id));
 
 alter table invoices enable row level security;
 
-create policy invoices_tx_parties on invoices for all
-  using (
-    exists (
-      select 1 from transactions t
-      where t.id = invoices.transaction_id
-        and (t.moto_company = my_company() or t.uke_company = my_company())
-    )
-  );
+create policy invoices_scope_select on invoices for select using (can_see_transaction(transaction_id));
+create policy invoices_parties_write on invoices for insert with check (is_tx_party(transaction_id));
+create policy invoices_parties_update on invoices for update
+  using (is_tx_party(transaction_id)) with check (is_tx_party(transaction_id));
 
 alter table payment_disputes enable row level security;
 
-create policy payment_disputes_tx_parties on payment_disputes for select
+create policy payment_disputes_scope_select on payment_disputes for select
   using (
     exists (
       select 1 from invoices i
-      join transactions t on t.id = i.transaction_id
-      where i.id = payment_disputes.invoice_id
-        and (t.moto_company = my_company() or t.uke_company = my_company())
+      where i.id = payment_disputes.invoice_id and can_see_transaction(i.transaction_id)
     )
   );
 
 alter table payment_dispute_logs enable row level security;
 
-create policy payment_dispute_logs_tx_parties on payment_dispute_logs for select
+create policy payment_dispute_logs_scope_select on payment_dispute_logs for select
   using (
     exists (
       select 1 from payment_disputes d
       join invoices i on i.id = d.invoice_id
-      join transactions t on t.id = i.transaction_id
-      where d.id = payment_dispute_logs.dispute_id
-        and (t.moto_company = my_company() or t.uke_company = my_company())
+      where d.id = payment_dispute_logs.dispute_id and can_see_transaction(i.transaction_id)
     )
   );
 
@@ -229,23 +193,10 @@ create policy payment_dispute_logs_tx_parties on payment_dispute_logs for select
 alter table site_assignments enable row level security;
 
 create policy site_assignments_visible on site_assignments for select
-  using (
-    user_id = auth.uid()
-    or exists (
-      select 1 from transactions t
-      where t.id = site_assignments.transaction_id
-        and (t.moto_company = my_company() or t.uke_company = my_company())
-    )
-  );
+  using (user_id = auth.uid() or is_tx_party(transaction_id));
 
 create policy site_assignments_manage on site_assignments for insert
-  with check (
-    exists (
-      select 1 from transactions t
-      where t.id = site_assignments.transaction_id
-        and (t.moto_company = my_company() or t.uke_company = my_company())
-    )
-  );
+  with check (is_tx_party(transaction_id));
 
 -- ============================================================
 -- 現場・写真
