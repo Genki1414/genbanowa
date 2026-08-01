@@ -15,6 +15,8 @@ export interface Usage {
   openAvailabilityCount: number;
   /** アーカイブ除く自社現場フォルダ件数 */
   activeSiteCount: number;
+  /** 金額を扱えるユーザー数（owner/admin/accounting の合計。field/viewerは無制限なので含めない） */
+  paidUserCount: number;
 }
 
 export const emptyUsage = (): Usage => ({
@@ -24,4 +26,5 @@ export const emptyUsage = (): Usage => ({
   jobsPostedThisMonth: 0,
   openAvailabilityCount: 0,
   activeSiteCount: 0,
+  paidUserCount: 0,
 });

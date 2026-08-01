@@ -12,7 +12,8 @@ export type QuotaKey =
   | "job.post"
   | "availability.slot"
   | "site.slot"
-  | "document.issue";
+  | "document.issue"
+  | "user.invite";
 
 export type QuotaResult = { ok: true } | { ok: false; reason: string; limit: number | "unlimited" };
 
@@ -44,6 +45,8 @@ export function checkQuota(plan: PlanLimits, usage: Usage, key: QuotaKey): Quota
       return withinLimit(usage.activeSiteCount, plan.site, "現場フォルダ");
     case "document.issue":
       return plan.docs ? { ok: true } : { ok: false, reason: "このプランでは書類を発行できません", limit: 0 };
+    case "user.invite":
+      return withinLimit(usage.paidUserCount, plan.users, "金額を扱えるユーザー数");
   }
 }
 

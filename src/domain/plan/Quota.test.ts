@@ -32,6 +32,18 @@ describe("checkQuota", () => {
     expect(under.ok).toBe(true);
     expect(over.ok).toBe(false);
   });
+
+  test("無料プランはユーザー1名まで（fieldは含めないカウント）", () => {
+    const under = checkQuota(PLANS.free, { ...emptyUsage(), paidUserCount: 0 }, "user.invite");
+    const over = checkQuota(PLANS.free, { ...emptyUsage(), paidUserCount: 1 }, "user.invite");
+    expect(under.ok).toBe(true);
+    expect(over.ok).toBe(false);
+  });
+
+  test("プレミアムはユーザー数が無制限", () => {
+    const r = checkQuota(PLANS.prem, { ...emptyUsage(), paidUserCount: 999 }, "user.invite");
+    expect(r.ok).toBe(true);
+  });
 });
 
 describe("checkScoutView", () => {
