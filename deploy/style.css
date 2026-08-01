@@ -1,0 +1,165 @@
+
+:root{
+  --sumi:#14171C; --kami:#FFFFFF; --yojo:#E9EDEA; --keisen:#D6DBD7;
+  --ki:#F5C518; --midori:#00874A; --aka:#D22630; --usu:#6B7280;
+  --font:'Hiragino Kaku Gothic ProN','Hiragino Sans','Noto Sans JP',system-ui,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);color:var(--sumi);background:var(--yojo);
+  -webkit-font-smoothing:antialiased;line-height:1.7}
+.wrap{max-width:520px;margin:0 auto;background:var(--yojo)}
+section{padding:40px 20px}
+.eyebrow{font-size:12px;font-weight:800;letter-spacing:.08em;color:var(--usu);margin-bottom:8px}
+h2{font-size:22px;font-weight:800;letter-spacing:-.02em;line-height:1.4;margin-bottom:6px}
+.lead{font-size:14px;color:var(--usu);margin-bottom:20px}
+
+/* 伝票カード：左端のミシン目 */
+.denpyo{position:relative;background:var(--kami);border:1px solid var(--keisen);
+  border-radius:6px;overflow:hidden;margin-bottom:12px}
+.denpyo::before{content:"";position:absolute;left:0;top:0;bottom:0;width:10px;background:var(--ki)}
+.denpyo::after{content:"";position:absolute;left:10px;top:0;bottom:0;width:8px;
+  background-image:radial-gradient(circle at 4px 5px, var(--yojo) 2.2px, transparent 2.4px);
+  background-size:8px 11px}
+.denpyo>.in{padding:14px 14px 14px 28px}
+.denpyo.g::before{background:var(--midori)}
+.denpyo.r::before{background:var(--aka)}
+
+/* ヘッダ */
+header{background:var(--sumi);padding:14px 20px;position:sticky;top:0;z-index:10;
+  display:flex;align-items:center;gap:10px}
+.logo{font-size:17px;font-weight:800;color:#fff;letter-spacing:-.02em}
+.logo b{color:var(--ki)}
+.hbtn{margin-left:auto;background:var(--ki);color:var(--sumi);font-size:12px;font-weight:800;
+  padding:8px 14px;border-radius:4px;text-decoration:none}
+
+/* ヒーロー */
+.hero{background:var(--sumi);color:#fff;padding:36px 20px 44px}
+.hero .tag{display:inline-block;background:var(--ki);color:var(--sumi);font-size:11px;
+  font-weight:800;padding:4px 10px;border-radius:3px;margin-bottom:16px}
+.hero h1{font-size:32px;font-weight:800;line-height:1.35;letter-spacing:-.03em;margin-bottom:14px}
+.hero h1 span{color:var(--ki)}
+.hero p{font-size:15px;color:rgba(255,255,255,.78);margin-bottom:24px}
+.cta{display:block;background:var(--ki);color:var(--sumi);text-align:center;
+  font-size:17px;font-weight:800;padding:16px;border-radius:5px;text-decoration:none;
+  border-bottom:4px solid #C9A20F}
+.cta.sub{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4);
+  border-bottom-width:1px;font-size:14px;padding:13px;margin-top:10px}
+.note{font-size:12px;color:rgba(255,255,255,.6);text-align:center;margin-top:12px}
+
+/* 案件カード */
+.chip{display:inline-block;font-size:11px;font-weight:800;padding:3px 8px;border-radius:3px;
+  border:1px solid var(--usu);color:var(--usu);margin-right:5px}
+.chip.solid{background:var(--sumi);color:#fff;border-color:var(--sumi)}
+.chip.pub{background:var(--ki);color:var(--sumi);border-color:var(--ki)}
+.chip.g{border-color:var(--midori);color:var(--midori)}
+.chip.j1{background:var(--midori);color:#fff;border-color:var(--midori)}
+.chip.j2{background:var(--usu);color:#fff;border-color:var(--usu)}
+.jobname{font-size:16px;font-weight:800;margin:8px 0 2px}
+.jobsub{font-size:12px;color:var(--usu);margin-bottom:8px}
+.row{display:flex;gap:8px;padding:2px 0;font-size:13px}
+.row .k{width:64px;flex:none;font-size:12px;color:var(--usu)}
+.row .v{font-weight:600;font-variant-numeric:tabular-nums;font-family:var(--mono)}
+.price{font-size:20px;font-weight:800;font-family:var(--mono);color:var(--sumi)}
+
+/* 3つの理由 */
+.reason{background:var(--kami);border:1px solid var(--keisen);border-radius:6px;
+  padding:18px 16px;margin-bottom:12px}
+.reason .n{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;
+  background:var(--sumi);color:var(--ki);font-size:13px;font-weight:800;border-radius:50%;
+  margin-bottom:10px;font-family:var(--mono)}
+.reason h3{font-size:17px;font-weight:800;margin-bottom:6px;letter-spacing:-.01em}
+.reason p{font-size:14px;color:var(--usu)}
+.reason .vs{margin-top:12px;padding-top:12px;border-top:1px dashed var(--keisen);
+  font-size:12px;color:var(--usu)}
+.reason .vs b{color:var(--sumi)}
+
+/* 料金 */
+.price-box{background:var(--sumi);color:#fff;border-radius:6px;padding:22px 18px;text-align:center}
+.price-box .yen{font-size:40px;font-weight:800;font-family:var(--mono);letter-spacing:-.02em}
+.price-box .per{font-size:14px;color:rgba(255,255,255,.7)}
+.price-box .cmp{background:rgba(255,255,255,.1);border-radius:4px;padding:10px;margin-top:14px;
+  font-size:13px;color:#fff}
+.price-box .cmp b{color:var(--ki);font-size:15px}
+.free{background:var(--kami);border:2px solid var(--midori);border-radius:6px;
+  padding:16px;margin-top:12px}
+.free h4{font-size:14px;font-weight:800;color:var(--midori);margin-bottom:6px}
+.free ul{list-style:none;font-size:13px}
+.free li{padding:3px 0 3px 20px;position:relative;color:var(--sumi)}
+.free li::before{content:"✓";position:absolute;left:0;color:var(--midori);font-weight:800}
+
+/* 段階開放 */
+.steps{counter-reset:s}
+.step{display:flex;gap:12px;padding:14px 0;border-bottom:1px dashed var(--keisen)}
+.step .no{flex:none;width:28px;height:28px;background:var(--ki);color:var(--sumi);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:800;font-family:var(--mono)}
+.step h4{font-size:15px;font-weight:800;margin-bottom:2px}
+.step p{font-size:13px;color:var(--usu)}
+
+/* FAQ */
+details{background:var(--kami);border:1px solid var(--keisen);border-radius:5px;
+  margin-bottom:8px;overflow:hidden}
+summary{padding:14px;font-size:14px;font-weight:700;cursor:pointer;list-style:none;
+  display:flex;align-items:center;gap:8px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"＋";margin-left:auto;color:var(--usu);font-weight:800}
+details[open] summary::after{content:"−"}
+details p{padding:0 14px 14px;font-size:13px;color:var(--usu)}
+
+/* 帯 */
+.band{background:var(--ki);padding:20px;text-align:center}
+.band p{font-size:15px;font-weight:800;color:var(--sumi)}
+footer{background:var(--sumi);color:rgba(255,255,255,.6);padding:28px 20px;font-size:12px}
+footer a{color:rgba(255,255,255,.8);text-decoration:none;margin-right:14px}
+.hazard{height:8px;background:repeating-linear-gradient(45deg,
+  var(--ki) 0 12px, var(--sumi) 12px 24px)}
+
+/* 先行登録フォーム */
+.form{margin-top:4px}
+.form input{width:100%;padding:15px 14px;font-size:16px;border:none;border-radius:5px;
+  font-family:var(--font);margin-bottom:8px;background:#fff;color:var(--sumi)}
+.form input::placeholder{color:#9AA0A6}
+.form button{width:100%;background:var(--ki);color:var(--sumi);border:none;
+  font-size:17px;font-weight:800;padding:16px;border-radius:5px;cursor:pointer;
+  font-family:var(--font);border-bottom:4px solid #C9A20F}
+.form .ok{background:var(--midori);color:#fff;padding:16px;border-radius:5px;
+  font-size:15px;font-weight:800;text-align:center;line-height:1.6}
+.privacy{font-size:11px;color:rgba(255,255,255,.55);margin-top:10px;text-align:center}
+.count{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);
+  padding:6px 12px;border-radius:99px;font-size:12px;font-weight:700;
+  color:#fff;margin-bottom:14px}
+.count b{color:var(--ki);font-family:var(--mono);font-size:14px}
+
+/* 先行登録の特典 */
+.perk{background:var(--kami);border:2px solid var(--ki);border-radius:6px;padding:16px;margin-top:14px}
+.perk h4{font-size:14px;font-weight:800;margin-bottom:8px}
+.perk ul{list-style:none;font-size:13px}
+.perk li{padding:4px 0 4px 22px;position:relative}
+.perk li::before{content:"◎";position:absolute;left:0;color:var(--ki);font-weight:800}
+
+/* アプリ画面モック */
+.phone{width:236px;margin:0 auto;border:8px solid var(--sumi);border-radius:26px;
+  overflow:hidden;background:var(--yojo);box-shadow:0 12px 28px rgba(20,23,28,.22)}
+.ph-head{background:var(--sumi);color:#fff;padding:9px 11px;font-size:12px;font-weight:800;
+  display:flex;align-items:center;gap:5px}
+.ph-body{padding:9px;min-height:238px}
+.ph-card{background:#fff;border:1px solid var(--keisen);border-radius:4px;
+  padding:8px 8px 8px 16px;margin-bottom:7px;position:relative;overflow:hidden}
+.ph-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--ki)}
+.ph-card.g::before{background:var(--midori)}
+.ph-chip{display:inline-block;font-size:8px;font-weight:800;padding:2px 5px;border-radius:2px;
+  background:var(--sumi);color:#fff;margin-right:3px}
+.ph-chip.g{background:var(--midori)}
+.ph-chip.o{background:transparent;color:var(--usu);border:1px solid var(--keisen)}
+.ph-t{font-size:11px;font-weight:800;margin:5px 0 1px}
+.ph-s{font-size:9px;color:var(--usu)}
+.ph-r{font-size:9px;color:var(--usu);margin-top:3px;font-family:var(--mono)}
+.ph-p{font-size:13px;font-weight:800;font-family:var(--mono);margin-top:3px}
+.ph-nav{background:var(--sumi);border-top:3px solid var(--ki);display:flex;padding:6px 0}
+.ph-nav span{flex:1;text-align:center;font-size:8px;font-weight:700;color:rgba(255,255,255,.5)}
+.ph-nav span.on{color:var(--ki)}
+.shots{display:flex;gap:12px;overflow-x:auto;padding:4px 0 10px;scroll-snap-type:x mandatory}
+.shots>div{scroll-snap-align:center;flex:none}
+.shotcap{font-size:12px;font-weight:800;text-align:center;margin-top:10px}
+.shotsub{font-size:11px;color:var(--usu);text-align:center}
