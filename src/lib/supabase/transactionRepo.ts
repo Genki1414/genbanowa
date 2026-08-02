@@ -7,6 +7,7 @@ import {
   TxDisplayStatus,
   transactionDisplayStatus,
 } from "@/domain/transaction/Transaction";
+import { Role, canSeeAmount } from "@/domain/auth/Role";
 import { Order } from "@/domain/transaction/Order";
 import { OrderRequest } from "@/domain/transaction/OrderRequest";
 import { DailyReport } from "@/domain/transaction/DailyReport";
@@ -122,8 +123,16 @@ export interface TransactionSummary {
   createdAt: string;
 }
 
-/** 一覧表示用。RLSが自社の取引だけを返すので、companyIdでの絞り込みは相手方の判定にだけ使う。 */
-export async function loadTransactionSummaries(supabase: Client, myCompanyId: string): Promise<TransactionSummary[]> {
+/**
+ * 一覧表示用。RLSが自社の取引だけを返すので、companyIdでの絞り込みは相手方の判定にだけ使う。
+ * totalAmount は field ロールに対してはここで0にする（呼び出し側のJSXが出し分けるだけに頼らない。
+ * 「絶対に守ること」1: 金額の秘匿はサーバー側で落とす）。
+ */
+export async function loadTransactionSummaries(
+  supabase: Client,
+  myCompanyId: string,
+  role: Role,
+): Promise<TransactionSummary[]> {
   const { data: txRows } = await supabase.from("transactions").select("*").order("created_at", { ascending: false });
   if (!txRows || txRows.length === 0) return [];
 
@@ -149,7 +158,7 @@ export async function loadTransactionSummaries(supabase: Client, myCompanyId: st
       side: t.moto_company === myCompanyId ? ("moto" as const) : ("uke" as const),
       status: t.status,
       displayStatus: transactionDisplayStatus(t.status, orders),
-      totalAmount: orders.reduce((n, o) => n + (o.keishiki === "ukeoi" ? o.amount : 0), 0),
+      totalAmount: canSeeAmount(role) ? orders.reduce((n, o) => n + (o.keishiki === "ukeoi" ? o.amount : 0), 0) : 0,
       createdAt: t.created_at,
     };
   });

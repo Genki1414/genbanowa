@@ -17,7 +17,7 @@ export default async function TransactionsPage() {
   if (!actor) redirect("/login");
 
   const supabase = await createClient();
-  const summaries = await loadTransactionSummaries(supabase, actor.companyId);
+  const summaries = await loadTransactionSummaries(supabase, actor.companyId, actor.role);
   const showAmount = canSeeAmount(actor.role);
 
   return (

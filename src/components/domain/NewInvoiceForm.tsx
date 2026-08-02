@@ -2,10 +2,12 @@
 
 import { useState, useTransition, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Field } from "@/components/ui/Field";
 import { Radio } from "@/components/ui/Radio";
 import { Btn } from "@/components/ui/Btn";
 import { Confirm } from "@/components/ui/Confirm";
+import { DenpyoCard } from "@/components/ui/DenpyoCard";
 import { C } from "@/styles/tokens";
 import { yen, tax as computeTax } from "@/domain/shared/money";
 import { submitInvoiceAction } from "@/app/actions/transaction";
@@ -68,16 +70,40 @@ export function NewInvoiceForm({
         ninkuTotal: basis === "ninku_month" ? ninkuTotalForMonth : undefined,
       });
       if (!r.ok) {
+        // 確認モーダルを閉じないと、下に出るエラーメッセージがモーダルの裏に隠れて見えない
+        setConfirmOpen(false);
         setError(r.error);
         return;
       }
+      // 注文書の金額を超える請求は警告するが拒否しない（絶対に守ること6）。
+      // 超過があるときは、警告を読ませてから自分で「取引に戻る」を押させる
+      // （即座に画面遷移すると、警告が出たことにすら気づけない）。
       if (r.value.overAmount > 0) {
         setOverAmountWarning(r.value.overAmount);
+        setConfirmOpen(false);
+        return;
       }
       router.push(`/transactions/${txId}`);
       router.refresh();
     });
   };
+
+  if (overAmountWarning !== null) {
+    return (
+      <DenpyoCard tone="aka">
+        <p className="text-[13px] font-bold mb-2" style={{ color: C.sumi }}>
+          請求書を送信しました。
+        </p>
+        <p className="text-[12px] mb-3" style={{ color: C.aka }}>
+          注文書の金額を {yen(overAmountWarning)} 超えて請求しています。追加分を先に請求する場合など、
+          意図的であれば問題ありません。
+        </p>
+        <Link href={`/transactions/${txId}`} className="text-[13px] font-bold underline" style={{ color: C.sumi }}>
+          取引に戻る
+        </Link>
+      </DenpyoCard>
+    );
+  }
 
   if (orders.length === 0) {
     return (
@@ -144,11 +170,6 @@ export function NewInvoiceForm({
       {error && (
         <p className="text-[12px] mb-3" style={{ color: C.aka }}>
           {error}
-        </p>
-      )}
-      {overAmountWarning !== null && (
-        <p className="text-[12px] mb-3" style={{ color: C.aka }}>
-          注文書の金額を {yen(overAmountWarning)} 超えて請求しています。
         </p>
       )}
       <Btn tone="ki" onClick={() => setConfirmOpen(true)} disabled={!ready}>

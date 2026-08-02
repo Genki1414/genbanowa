@@ -41,6 +41,8 @@ export type Action =
   | "photo.capture"
   | "photo.view"
   | "photo.exportPdf"
+  // 現場担当の割り当て（04_権限ロール設計.md 3章「割り当ては owner / admin / accounting が行う」）
+  | "assignment.manage"
   // 会社・信用・プラン
   | "company.edit"
   | "trustDocument.submit"
@@ -90,6 +92,7 @@ const MATRIX: Matrix = {
   "photo.capture": { owner: T, admin: T, accounting: F, field: T, viewer: F },
   "photo.view": { owner: T, admin: T, accounting: T, field: T, viewer: T },
   "photo.exportPdf": { owner: T, admin: T, accounting: T, field: T, viewer: T },
+  "assignment.manage": { owner: T, admin: T, accounting: T, field: F, viewer: F },
 
   "company.edit": { owner: T, admin: T, accounting: T, field: F, viewer: F },
   "trustDocument.submit": { owner: T, admin: T, accounting: T, field: F, viewer: F },

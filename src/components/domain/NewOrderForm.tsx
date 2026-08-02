@@ -58,6 +58,8 @@ export function NewOrderForm({
         fulfillsRequestId,
       });
       if (!r.ok) {
+        // 確認モーダルを閉じないと、下のエラーメッセージがモーダルの裏に隠れて見えない
+        setConfirmOpen(false);
         setError(r.error);
         return;
       }

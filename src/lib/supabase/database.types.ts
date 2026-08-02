@@ -127,6 +127,12 @@ type ConversationRow = {
   created_at: string;
 };
 
+type SiteAssignmentRow = {
+  transaction_id: string;
+  user_id: string;
+  assigned_at: string;
+};
+
 export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "12";
@@ -173,6 +179,7 @@ export type Database = {
         ConversationRow,
         Partial<ConversationRow> & { kind: "job" | "direct"; company_a: string; company_b: string }
       >;
+      site_assignments: Table<SiteAssignmentRow, { transaction_id: string; user_id: string; assigned_at?: string }>;
     };
     Views: { [_ in never]: never };
     Functions: {

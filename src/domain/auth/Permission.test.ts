@@ -34,6 +34,18 @@ describe("契約行為は決裁権のある人に限る", () => {
   });
 });
 
+describe("現場担当の割り当ては owner/admin/accounting が行う", () => {
+  test("field 自身は割り当てを操作できない", () => {
+    expect(can("field", "assignment.manage")).toBe(false);
+  });
+
+  test("owner・admin・accounting はできる", () => {
+    expect(can("owner", "assignment.manage")).toBe(true);
+    expect(can("admin", "assignment.manage")).toBe(true);
+    expect(can("accounting", "assignment.manage")).toBe(true);
+  });
+});
+
 describe("ユーザー管理は owner のみ", () => {
   test("admin はユーザー招待・削除・ロール変更・プラン変更ができない", () => {
     expect(can("admin", "user.invite")).toBe(false);

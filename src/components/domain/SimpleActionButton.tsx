@@ -34,6 +34,8 @@ export function SimpleActionButton({
     startTransition(async () => {
       const r = await action();
       if (!r.ok) {
+        // 確認モーダルを閉じないと、下のエラーメッセージがモーダルの裏に隠れて見えない
+        setOpen(false);
         setError(r.error);
         return;
       }

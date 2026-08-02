@@ -13,10 +13,12 @@ import { SimpleActionButton } from "@/components/domain/SimpleActionButton";
 import { RejectOrderButton } from "@/components/domain/RejectOrderButton";
 import { ConfirmReceiptButton } from "@/components/domain/ConfirmReceiptButton";
 import { RequestAdditionalOrderForm } from "@/components/domain/RequestAdditionalOrderForm";
+import { AssignmentManager } from "@/components/domain/AssignmentManager";
 import { currentActor } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { loadTransaction } from "@/lib/supabase/transactionRepo";
 import { canSeeAmount } from "@/domain/auth/Role";
+import { can } from "@/domain/auth/Permission";
 import { transactionDisplayStatus } from "@/domain/transaction/Transaction";
 import { isPending } from "@/domain/transaction/Order";
 import { yen } from "@/domain/shared/money";
@@ -48,6 +50,19 @@ export default async function TransactionDetailPage({ params }: { params: Promis
   const partnerCompanyId = side === "moto" ? tx.ukeCompanyId : tx.motoCompanyId;
   const { data: partner } = await supabase.from("companies").select("name").eq("id", partnerCompanyId).maybeSingle();
 
+  const canManageAssignment = can(actor.role, "assignment.manage");
+  let fieldUsers: { id: string; name: string }[] = [];
+  let assignedUserIds: string[] = [];
+  if (canManageAssignment) {
+    const [{ data: fieldUserRows }, { data: assignmentRows }] = await Promise.all([
+      supabase.from("users").select("id, name").eq("company_id", actor.companyId).eq("role", "field"),
+      supabase.from("site_assignments").select("user_id").eq("transaction_id", id),
+    ]);
+    fieldUsers = fieldUserRows ?? [];
+    const assignedIdSet = new Set((assignmentRows ?? []).map((a) => a.user_id));
+    assignedUserIds = fieldUsers.filter((u) => assignedIdSet.has(u.id)).map((u) => u.id);
+  }
+
   const displayStatus = transactionDisplayStatus(tx.status, tx.orders);
   const canIssueOrder = actions.includes("order.issue");
   const canReport = actions.includes("report.write");
@@ -70,6 +85,15 @@ export default async function TransactionDetailPage({ params }: { params: Promis
           {stripped.closingDay && <Row label="締め日" value={stripped.closingDay} />}
           {stripped.paymentTerms && <Row label="支払日" value={stripped.paymentTerms} />}
         </DenpyoCard>
+
+        {canManageAssignment && (
+          <>
+            <h2 className="text-[13px] font-extrabold mt-4 mb-2" style={{ color: C.sumi }}>
+              現場担当の割り当て
+            </h2>
+            <AssignmentManager txId={id} fieldUsers={fieldUsers} assignedUserIds={assignedUserIds} />
+          </>
+        )}
 
         <h2 className="text-[13px] font-extrabold mt-4 mb-2" style={{ color: C.sumi }}>
           注文書

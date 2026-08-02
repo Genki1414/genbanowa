@@ -20,11 +20,11 @@ export function ConfirmReceiptButton({ txId, invoiceId, dueDate }: { txId: strin
   const run = () => {
     startTransition(async () => {
       const r = await confirmReceiptAction(txId, invoiceId, receivedOn);
+      setConfirmOpen(false);
       if (!r.ok) {
         setError(r.error);
         return;
       }
-      setConfirmOpen(false);
       router.refresh();
     });
   };

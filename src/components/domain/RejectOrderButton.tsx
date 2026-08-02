@@ -19,11 +19,11 @@ export function RejectOrderButton({ txId, orderId, orderLabel }: { txId: string;
   const run = () => {
     startTransition(async () => {
       const r = await rejectOrderAction(txId, orderId, note);
+      setConfirmOpen(false);
       if (!r.ok) {
         setError(r.error);
         return;
       }
-      setConfirmOpen(false);
       router.refresh();
     });
   };
