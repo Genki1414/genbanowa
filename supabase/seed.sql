@@ -18,7 +18,7 @@ insert into companies (name, type, rep_name, established, address, industries, s
 values
   ('高橋工業', 'corp', null, null, '千葉県', array['足場', '解体'], array['千葉県', '東京都', '埼玉県'],
    '千葉県知事 般-4 第12345号', '{"kenpo":true,"kounen":true,"koyou":true}'::jsonb, 'あり',
-   'free', 'both', array['jobs', 'messages', 'me'], 1);
+   'std', 'both', array['jobs', 'messages', 'me'], 1);
 
 insert into companies (name, type, rep_name, established, address, industries, license_no)
 values
@@ -63,6 +63,10 @@ select c.id, d.kind, 'approved' from companies c, (values
 where c.name = d.name;
 
 update companies set trust_score = 35, trust_level = 'Bronze' where name = '高橋工業';
+
+-- 動作確認シナリオ（docs/11_シードデータ.md）は請求書の新規発行を含むため、
+-- 取引3の受注側である丸和塗装も無料プラン（docs=false）のままでは検証できない。
+update companies set plan = 'std' where name = '丸和塗装';
 
 -- ============================================================
 -- 案件
