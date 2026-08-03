@@ -19,7 +19,7 @@ export default async function RequestTransactionPage({ params }: { params: Promi
   if (conv.company_a !== actor.companyId && conv.company_b !== actor.companyId) notFound();
 
   const partnerCompanyId = conv.company_a === actor.companyId ? conv.company_b : conv.company_a;
-  const { data: partner } = await supabase.from("companies").select("name").eq("id", partnerCompanyId).maybeSingle();
+  const { data: partner } = await supabase.from("companies_public").select("name").eq("id", partnerCompanyId).maybeSingle();
 
   return (
     <div className="min-h-screen" style={{ background: C.yojo }}>

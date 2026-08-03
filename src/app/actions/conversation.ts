@@ -16,8 +16,10 @@ export async function searchCompaniesAction(query: string): Promise<Result<{ id:
   if (!q) return ok([]);
 
   const supabase = await createClient();
+  // companies は自社しか見えないRLSなので、他社検索には意図的に公開しているビューを使う
+  // （0003_views.sql / 0004_rls.sql 参照）。
   const { data, error } = await supabase
-    .from("companies")
+    .from("companies_public")
     .select("id, name")
     .neq("id", actor.companyId)
     .ilike("name", `%${q}%`)

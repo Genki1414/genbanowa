@@ -49,7 +49,7 @@ export default async function TransactionDetailPage({ params }: { params: Promis
   const actions = tx.availableActions(actor);
 
   const partnerCompanyId = side === "moto" ? tx.ukeCompanyId : tx.motoCompanyId;
-  const { data: partner } = await supabase.from("companies").select("name").eq("id", partnerCompanyId).maybeSingle();
+  const { data: partner } = await supabase.from("companies_public").select("name").eq("id", partnerCompanyId).maybeSingle();
 
   const canManageAssignment = can(actor.role, "assignment.manage");
   let fieldUsers: { id: string; name: string }[] = [];

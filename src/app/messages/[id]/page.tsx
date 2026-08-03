@@ -20,7 +20,7 @@ export default async function ConversationPage({ params }: { params: Promise<{ i
 
   const partnerCompanyId = conv.company_a === actor.companyId ? conv.company_b : conv.company_a;
   const [{ data: partner }, messages, { data: existingTx }] = await Promise.all([
-    supabase.from("companies").select("name").eq("id", partnerCompanyId).maybeSingle(),
+    supabase.from("companies_public").select("name").eq("id", partnerCompanyId).maybeSingle(),
     loadMessages(supabase, id),
     supabase.from("transactions").select("id").eq("conversation_id", id).maybeSingle(),
   ]);

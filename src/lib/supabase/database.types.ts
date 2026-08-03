@@ -198,7 +198,25 @@ export type Database = {
       >;
       site_assignments: Table<SiteAssignmentRow, { transaction_id: string; user_id: string; assigned_at?: string }>;
     };
-    Views: { [_ in never]: never };
+    Views: {
+      companies_public: {
+        Row: {
+          id: string;
+          name: string;
+          type: "corp" | "sole";
+          rep_name: string | null;
+          established: string | null;
+          area: string | null;
+          industries: string[] | null;
+          service_areas: string[] | null;
+          license_no: string | null;
+          trust_score: number;
+          trust_level: string;
+          approved_doc_kinds: string[] | null;
+        };
+        Relationships: [];
+      };
+    };
     Functions: {
       my_company: { Args: Record<string, never>; Returns: string };
       my_role: { Args: Record<string, never>; Returns: string };

@@ -145,8 +145,9 @@ export async function loadTransactionSummaries(
     ordersByTx.set(o.transaction_id, [...(ordersByTx.get(o.transaction_id) ?? []), o]);
   }
 
+  // companies は自社しか見えないRLSなので、相手会社の名前は意図的に公開しているビューから引く
   const partnerIds = [...new Set(txRows.map((t) => (t.moto_company === myCompanyId ? t.uke_company : t.moto_company)))];
-  const { data: partnerRows } = await supabase.from("companies").select("id, name").in("id", partnerIds);
+  const { data: partnerRows } = await supabase.from("companies_public").select("id, name").in("id", partnerIds);
   const nameById = new Map((partnerRows ?? []).map((c) => [c.id, c.name]));
 
   return txRows.map((t) => {

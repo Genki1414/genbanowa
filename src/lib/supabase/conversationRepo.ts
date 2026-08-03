@@ -48,7 +48,8 @@ export async function loadConversationList(supabase: Client, myCompanyId: string
     .order("created_at", { ascending: true });
 
   const partnerIds = [...new Set(convRows.map((c) => (c.company_a === myCompanyId ? c.company_b : c.company_a)))];
-  const { data: partnerRows } = await supabase.from("companies").select("id, name").in("id", partnerIds);
+  // companies は自社しか見えないRLSなので、相手会社の名前は意図的に公開しているビューから引く
+  const { data: partnerRows } = await supabase.from("companies_public").select("id, name").in("id", partnerIds);
   const nameById = new Map((partnerRows ?? []).map((c) => [c.id, c.name]));
 
   const messagesByConv = new Map<string, MessageRow[]>();
