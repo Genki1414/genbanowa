@@ -78,6 +78,8 @@ function toInvoice(row: InvoiceRow): Invoice {
     paidAt: row.paid_at,
     receivedAt: row.received_at,
     receivedOn: row.received_on,
+    rejectedAt: row.rejected_at,
+    rejectNote: row.reject_note ?? undefined,
   };
 }
 

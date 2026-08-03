@@ -269,9 +269,29 @@ export class Transaction {
       paidAt: null,
       receivedAt: null,
       receivedOn: null,
+      rejectedAt: null,
     };
     void at;
     return ok(this.with({ invoices: [...this.props.invoices, invoice] }));
+  }
+
+  /**
+   * 請求書の差し戻し。削除ではなく、記録を残したまま無効化する
+   * （CLAUDE.md「絶対に守ること」4：書類は送信後に変更できない。訂正は差し戻しか新規発行）。
+   * 却下された請求は再度、新規の請求書として出し直す。
+   */
+  rejectInvoice(invoiceId: string, note: string, actor: Actor, at: string): Result<Transaction> {
+    if (this.sideOf(actor) !== "moto") return err("NOT_MOTO");
+    if (!can(actor.role, "invoice.reject")) return err("PERMISSION_DENIED");
+
+    const invoice = this.props.invoices.find((v) => v.id === invoiceId);
+    if (!invoice) return err("INVOICE_NOT_FOUND");
+    if (invoice.status !== "submitted") return err("INVOICE_NOT_SUBMITTED");
+
+    const invoices = this.props.invoices.map((v) =>
+      v.id === invoiceId ? { ...v, status: "rejected" as const, rejectedAt: at, rejectNote: note } : v,
+    );
+    return ok(this.with({ invoices }));
   }
 
   approveInvoice(invoiceId: string, actor: Actor, at: string, approvalLimit?: number): Result<Transaction> {
@@ -370,6 +390,7 @@ export class Transaction {
     push("report.write", side === "uke" && notClosed);
     push("invoice.create", side === "uke" && hasAcceptedOrder && notClosed);
     push("invoice.approve", side === "moto" && submittedInvoice);
+    push("invoice.reject", side === "moto" && submittedInvoice);
     push("payment.register", side === "moto" && approvedInvoice);
     push("receipt.confirm", side === "uke" && paidInvoice);
     push("completion.request", side === "uke" && this.props.status === "active");

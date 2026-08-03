@@ -39,6 +39,9 @@ export function InvoiceCard({ invoice, showAmount }: { invoice: Invoice; showAmo
       {showAmount && <Row label="請求額" value={yen(invoice.amount + invoice.tax)} mono />}
       <Row label="期日" value={fmt(invoice.dueDate)} mono />
       {invoice.receivedOn && <Row label="入金日" value={fmt(invoice.receivedOn)} mono />}
+      {invoice.status === "rejected" && invoice.rejectNote && (
+        <Row label="差し戻し理由" value={invoice.rejectNote} />
+      )}
     </DenpyoCard>
   );
 }

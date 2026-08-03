@@ -271,6 +271,26 @@ export async function approveInvoiceAction(txId: string, invoiceId: string): Pro
   return ok(null);
 }
 
+export async function rejectInvoiceAction(txId: string, invoiceId: string, note: string): Promise<Result<null>> {
+  const actor = await requireActor();
+  const supabase = await createClient();
+  const tx = await loadTransaction(supabase, txId);
+  if (!tx) return err("TRANSACTION_NOT_FOUND");
+
+  const now = new Date().toISOString();
+  const result = tx.rejectInvoice(invoiceId, note, actor, now);
+  if (!result.ok) return err(result.error);
+
+  const { error } = await supabase
+    .from("invoices")
+    .update({ status: "rejected", rejected_at: now, reject_note: note })
+    .eq("id", invoiceId);
+  if (error) return err(error.message);
+
+  revalidatePath(`/transactions/${txId}`);
+  return ok(null);
+}
+
 export async function registerPaymentAction(txId: string, invoiceId: string): Promise<Result<null>> {
   const actor = await requireActor();
   const supabase = await createClient();

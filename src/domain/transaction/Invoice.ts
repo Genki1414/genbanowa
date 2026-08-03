@@ -19,6 +19,8 @@ export interface Invoice {
   paidAt: string | null; // 発注側が支払を登録した時刻
   receivedAt: string | null; // 受注側が入金を確認した時刻
   receivedOn: string | null; // 実際の入金日（期日内判定に使う）
+  rejectedAt: string | null; // 発注側が差し戻した時刻
+  rejectNote?: string;
 }
 
 /** 指定の注文書に対して、これまでに請求した合計額（却下を除く）。 */

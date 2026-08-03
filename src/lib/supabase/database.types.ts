@@ -113,6 +113,8 @@ type InvoiceRow = {
   paid_at: string | null;
   received_at: string | null;
   received_on: string | null;
+  rejected_at: string | null;
+  reject_note: string | null;
   pdf_path: string | null;
   created_at: string;
 };

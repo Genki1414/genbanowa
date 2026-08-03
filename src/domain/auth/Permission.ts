@@ -19,6 +19,7 @@ export type Action =
   | "report.write"
   | "invoice.create"
   | "invoice.approve"
+  | "invoice.reject"
   | "payment.register"
   | "receipt.confirm"
   | "completion.request"
@@ -70,6 +71,7 @@ const MATRIX: Matrix = {
   "invoice.create": { owner: T, admin: T, accounting: T, field: F, viewer: F },
   // accounting は金額の上限つき（既定50万円）。超える場合は owner/admin の承認が必要 → requiresOwnerApproval() で判定
   "invoice.approve": { owner: T, admin: T, accounting: T, field: F, viewer: F },
+  "invoice.reject": { owner: T, admin: T, accounting: T, field: F, viewer: F },
   "payment.register": { owner: T, admin: T, accounting: T, field: F, viewer: F },
   "receipt.confirm": { owner: T, admin: T, accounting: T, field: F, viewer: F },
   "completion.request": { owner: T, admin: T, accounting: T, field: T, viewer: F },

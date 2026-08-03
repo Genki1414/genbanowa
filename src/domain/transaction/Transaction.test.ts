@@ -107,8 +107,8 @@ describe("請求の超過は警告のみで拒否しない", () => {
     const over = computeOverAmount(
       1_000_000,
       [
-        { id: "v1", orderId: "o1", amount: 900_000, tax: 90_000, basis: "manual", dueDate: "2026-09-30", status: "rejected", approvedAt: null, paidAt: null, receivedAt: null, receivedOn: null },
-        { id: "v2", orderId: "o1", amount: 300_000, tax: 30_000, basis: "manual", dueDate: "2026-09-30", status: "submitted", approvedAt: null, paidAt: null, receivedAt: null, receivedOn: null },
+        { id: "v1", orderId: "o1", amount: 900_000, tax: 90_000, basis: "manual", dueDate: "2026-09-30", status: "rejected", approvedAt: null, paidAt: null, receivedAt: null, receivedOn: null, rejectedAt: "2026-08-01" },
+        { id: "v2", orderId: "o1", amount: 300_000, tax: 30_000, basis: "manual", dueDate: "2026-09-30", status: "submitted", approvedAt: null, paidAt: null, receivedAt: null, receivedOn: null, rejectedAt: null },
       ],
       "o1",
     );

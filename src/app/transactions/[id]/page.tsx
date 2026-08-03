@@ -12,6 +12,7 @@ import { ReportList } from "@/components/domain/ReportList";
 import { SimpleActionButton } from "@/components/domain/SimpleActionButton";
 import { RejectOrderButton } from "@/components/domain/RejectOrderButton";
 import { ConfirmReceiptButton } from "@/components/domain/ConfirmReceiptButton";
+import { RejectInvoiceButton } from "@/components/domain/RejectInvoiceButton";
 import { RequestAdditionalOrderForm } from "@/components/domain/RequestAdditionalOrderForm";
 import { AssignmentManager } from "@/components/domain/AssignmentManager";
 import { currentActor } from "@/lib/auth";
@@ -168,6 +169,9 @@ export default async function TransactionDetailPage({ params }: { params: Promis
                   confirmRows={showAmount ? [["請求額", yen(invoice.amount + invoice.tax)]] : []}
                   action={approveInvoiceAction.bind(null, id, invoice.id)}
                 />
+              )}
+              {invoice.status === "submitted" && actions.includes("invoice.reject") && (
+                <RejectInvoiceButton txId={id} invoiceId={invoice.id} />
               )}
               {invoice.status === "approved" && actions.includes("payment.register") && (
                 <SimpleActionButton
