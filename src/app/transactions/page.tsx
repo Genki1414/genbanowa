@@ -23,7 +23,17 @@ export default async function TransactionsPage() {
 
   return (
     <div className="min-h-screen" style={{ background: C.yojo }}>
-      <Header title="取引" right={<UserMenu name={actor.name} role={actor.role} />} />
+      <Header
+        title="取引"
+        right={
+          <div className="flex items-center gap-3">
+            <Link href="/messages" className="text-[12px] font-bold" style={{ color: C.ki }}>
+              メッセージ
+            </Link>
+            <UserMenu name={actor.name} role={actor.role} />
+          </div>
+        }
+      />
       <main className="max-w-md mx-auto p-3">
         {summaries.length === 0 && (
           <p className="text-[12px]" style={{ color: C.usu }}>

@@ -129,6 +129,17 @@ type ConversationRow = {
   created_at: string;
 };
 
+type MessageRow = {
+  id: string;
+  conversation_id: string;
+  sender_company: string;
+  sender_user: string | null;
+  body: string | null;
+  attachment: Json | null;
+  read_at: string | null;
+  created_at: string;
+};
+
 type SiteAssignmentRow = {
   transaction_id: string;
   user_id: string;
@@ -180,6 +191,10 @@ export type Database = {
       conversations: Table<
         ConversationRow,
         Partial<ConversationRow> & { kind: "job" | "direct"; company_a: string; company_b: string }
+      >;
+      messages: Table<
+        MessageRow,
+        Partial<MessageRow> & { conversation_id: string; sender_company: string }
       >;
       site_assignments: Table<SiteAssignmentRow, { transaction_id: string; user_id: string; assigned_at?: string }>;
     };
