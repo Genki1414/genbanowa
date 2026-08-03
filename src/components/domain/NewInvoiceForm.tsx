@@ -21,6 +21,8 @@ interface OrderOption {
   keishiki: "ukeoi" | "ninku";
   amount: number;
   tanka: number;
+  /** これまでにこの注文書へ請求した合計額（却下を除く）。超過警告の事前計算に使う。 */
+  alreadyBilled: number;
 }
 
 export function NewInvoiceForm({
@@ -56,6 +58,8 @@ export function NewInvoiceForm({
 
   const tax = computeTax(amount);
   const ready = orderId && dueDate && amount > 0;
+  // 送信後ではなく送信前に超過を確認させる（絶対に守ること6：拒否はしない。送信は妨げない）。
+  const projectedOver = order ? order.alreadyBilled + amount - order.amount : 0;
 
   const submit = () => {
     setError("");
@@ -181,12 +185,25 @@ export function NewInvoiceForm({
           note="送信後は内容を変更できません。"
           doc={{
             name: "請求書",
-            rows: [
-              ["請求額", yen(amount + tax)],
-              ["支払期日", dueDate],
-            ],
+            rows:
+              projectedOver > 0
+                ? [
+                    ["請求額", yen(amount + tax)],
+                    ["支払期日", dueDate],
+                    ["注文書の金額", yen(order?.amount ?? 0)],
+                    ["超過額", yen(projectedOver)],
+                  ]
+                : [
+                    ["請求額", yen(amount + tax)],
+                    ["支払期日", dueDate],
+                  ],
           }}
           rows={[]}
+          check={
+            projectedOver > 0
+              ? `注文書の金額を ${yen(projectedOver)} 超えて請求します。追加分を先に請求する場合など、意図的であれば確認してください。`
+              : undefined
+          }
           okLabel={pending ? "送信中…" : "送信する"}
           onOk={submit}
           onCancel={() => setConfirmOpen(false)}

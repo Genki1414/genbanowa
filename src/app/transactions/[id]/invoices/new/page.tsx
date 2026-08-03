@@ -8,6 +8,7 @@ import { loadTransaction } from "@/lib/supabase/transactionRepo";
 import { can } from "@/domain/auth/Permission";
 import { isAccepted } from "@/domain/transaction/Order";
 import { ninkuByMonth } from "@/domain/transaction/DailyReport";
+import { billedForOrder } from "@/domain/transaction/Invoice";
 
 export default async function NewInvoicePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -25,6 +26,7 @@ export default async function NewInvoicePage({ params }: { params: Promise<{ id:
     keishiki: o.keishiki,
     amount: o.amount,
     tanka: o.tanka,
+    alreadyBilled: billedForOrder(tx.invoices, o.id),
   }));
 
   return (
