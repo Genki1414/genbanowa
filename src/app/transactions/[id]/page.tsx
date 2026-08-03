@@ -111,7 +111,7 @@ export default async function TransactionDetailPage({ params }: { params: Promis
                     confirmTitle="注文請書を返送します"
                     confirmNote="送信後は取り消せません。"
                     confirmRows={[["注文書", `No.${order.seq}`]]}
-                    action={() => acceptOrderAction(id, order.id)}
+                    action={acceptOrderAction.bind(null, id, order.id)}
                   />
                   <RejectOrderButton txId={id} orderId={order.id} orderLabel={`No.${order.seq}`} />
                 </div>
@@ -166,7 +166,7 @@ export default async function TransactionDetailPage({ params }: { params: Promis
                   tone="midori"
                   confirmTitle="請求を承認します"
                   confirmRows={showAmount ? [["請求額", yen(invoice.amount + invoice.tax)]] : []}
-                  action={() => approveInvoiceAction(id, invoice.id)}
+                  action={approveInvoiceAction.bind(null, id, invoice.id)}
                 />
               )}
               {invoice.status === "approved" && actions.includes("payment.register") && (
@@ -176,7 +176,7 @@ export default async function TransactionDetailPage({ params }: { params: Promis
                   confirmTitle="支払を登録します"
                   confirmNote="実際に振込・送金した後に登録してください。"
                   confirmRows={[["期日", fmt(invoice.dueDate)]]}
-                  action={() => registerPaymentAction(id, invoice.id)}
+                  action={registerPaymentAction.bind(null, id, invoice.id)}
                 />
               )}
               {invoice.status === "paid" && actions.includes("receipt.confirm") && (
@@ -199,7 +199,7 @@ export default async function TransactionDetailPage({ params }: { params: Promis
                 tone="ki"
                 confirmTitle="取引の完了を申請します"
                 confirmRows={[["工事名", tx.title]]}
-                action={() => requestCompletionAction(id)}
+                action={requestCompletionAction.bind(null, id)}
               />
             )}
             {canApproveCompletion && (
@@ -209,7 +209,7 @@ export default async function TransactionDetailPage({ params }: { params: Promis
                 confirmTitle="取引の完了を承認します"
                 confirmNote="承認すると、双方の信用スコアに反映されます。"
                 confirmRows={[["工事名", tx.title]]}
-                action={() => approveCompletionAction(id)}
+                action={approveCompletionAction.bind(null, id)}
               />
             )}
           </div>
