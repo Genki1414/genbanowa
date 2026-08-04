@@ -37,6 +37,7 @@ export async function postJobAction(input: {
   boshuTo?: string;
   priceMode?: "sashine" | "mitsumori";
   price?: number;
+  quoteDue?: string;
   tanka?: number;
   headcount?: number;
   paymentTerms?: string;

@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/server";
 import { loadOpenJobs } from "@/lib/supabase/jobRepo";
 import { can } from "@/domain/auth/Permission";
 import { yen } from "@/domain/shared/money";
-import { range } from "@/domain/shared/date";
+import { range, fmt } from "@/domain/shared/date";
 
 const KEISHIKI_LABEL = { ukeoi: "請負", ouen: "応援（常用）" } as const;
 
@@ -51,6 +51,10 @@ export default async function JobsPage() {
                 <span className="text-[13px] font-extrabold truncate" style={{ color: C.sumi }}>
                   {j.name}
                 </span>
+                {j.companyId === actor.companyId && <Chip color={C.midori}>自社の投稿</Chip>}
+              </div>
+              <div className="text-[12px] mb-1" style={{ color: C.usu }}>
+                {j.companyName}
               </div>
               <div className="flex items-center gap-2 flex-wrap mb-1">
                 <Chip color={C.usu}>{KEISHIKI_LABEL[j.keishiki]}</Chip>
@@ -59,7 +63,13 @@ export default async function JobsPage() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-[13px] font-bold" style={{ color: C.sumi }}>
-                  {j.keishiki === "ouen" ? `${yen(j.tanka)}／人工` : j.price > 0 ? yen(j.price) : "応相談"}
+                  {j.keishiki === "ouen"
+                    ? `${yen(j.tanka)}／人工`
+                    : j.priceMode === "mitsumori"
+                      ? `見積依頼（提出期限 ${fmt(j.quoteDue)}）`
+                      : j.price > 0
+                        ? yen(j.price)
+                        : "応相談"}
                 </span>
                 {(j.kokiFrom || j.kokiTo) && (
                   <span className="text-[11px]" style={{ color: C.usu }}>

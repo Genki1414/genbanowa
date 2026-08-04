@@ -10,6 +10,7 @@ import { C } from "@/styles/tokens";
 import { postJobAction } from "@/app/actions/job";
 
 const KEISHIKI_OPTIONS = ["請負", "応援（常用）"] as const;
+const PRICE_MODE_OPTIONS = ["指値", "見積依頼"] as const;
 
 export function NewJobForm() {
   const [name, setName] = useState("");
@@ -21,7 +22,9 @@ export function NewJobForm() {
   const [kokiB, setKokiB] = useState("");
   const [boshuA, setBoshuA] = useState("");
   const [boshuB, setBoshuB] = useState("");
+  const [priceModeLabel, setPriceModeLabel] = useState<(typeof PRICE_MODE_OPTIONS)[number]>("指値");
   const [price, setPrice] = useState("");
+  const [quoteDue, setQuoteDue] = useState("");
   const [tanka, setTanka] = useState("");
   const [headcount, setHeadcount] = useState("");
   const [paymentTerms, setPaymentTerms] = useState("");
@@ -30,6 +33,7 @@ export function NewJobForm() {
   const router = useRouter();
 
   const keishiki = keishikiLabel === "請負" ? "ukeoi" : "ouen";
+  const priceMode = priceModeLabel === "指値" ? "sashine" : "mitsumori";
   const ready = name && industry && area;
 
   const submit = () => {
@@ -45,7 +49,9 @@ export function NewJobForm() {
         kokiTo: kokiB || undefined,
         boshuFrom: boshuA || undefined,
         boshuTo: boshuB || undefined,
-        price: keishiki === "ukeoi" ? Number(price) || undefined : undefined,
+        priceMode: keishiki === "ukeoi" ? priceMode : undefined,
+        price: keishiki === "ukeoi" && priceMode === "sashine" ? Number(price) || undefined : undefined,
+        quoteDue: keishiki === "ukeoi" && priceMode === "mitsumori" ? quoteDue || undefined : undefined,
         tanka: keishiki === "ouen" ? Number(tanka) || undefined : undefined,
         headcount: Number(headcount) || undefined,
         paymentTerms: paymentTerms || undefined,
@@ -74,7 +80,30 @@ export function NewJobForm() {
       <DateRange label="工期（任意）" a={kokiA} b={kokiB} onA={setKokiA} onB={setKokiB} />
       <DateRange label="募集期間（任意）" a={boshuA} b={boshuB} onA={setBoshuA} onB={setBoshuB} />
       {keishiki === "ukeoi" ? (
-        <Field label="金額（税抜・任意）" value={price} onChange={setPrice} type="number" placeholder="応相談なら空欄" />
+        <>
+          <div className="mb-3">
+            <span className="block text-[11px] font-bold mb-1" style={{ color: C.usu }}>
+              価格の出し方
+            </span>
+            <Radio options={[...PRICE_MODE_OPTIONS]} value={priceModeLabel} onChange={(v) => setPriceModeLabel(v as (typeof PRICE_MODE_OPTIONS)[number])} />
+          </div>
+          {priceMode === "sashine" ? (
+            <Field label="指値（税抜・任意）" value={price} onChange={setPrice} type="number" placeholder="応相談なら空欄" />
+          ) : (
+            <label className="block mb-3">
+              <span className="block text-[11px] font-bold mb-1" style={{ color: C.usu }}>
+                見積提出期限
+              </span>
+              <input
+                type="date"
+                value={quoteDue}
+                onChange={(e) => setQuoteDue(e.target.value)}
+                className="w-full px-3 py-2 text-[15px] outline-none"
+                style={{ background: "#fff", border: `1px solid ${C.keisen}`, borderRadius: 4, color: C.sumi }}
+              />
+            </label>
+          )}
+        </>
       ) : (
         <Field label="人工単価（税抜・任意）" value={tanka} onChange={setTanka} type="number" placeholder="0" />
       )}

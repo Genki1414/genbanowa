@@ -63,23 +63,54 @@ function toAvailability(row: AvailabilityRow): Availability {
   };
 }
 
-export async function loadOpenJobs(supabase: Client): Promise<Job[]> {
-  const { data } = await supabase.from("jobs").select("*").eq("status", "open").order("posted_at", { ascending: false });
-  return (data ?? []).map(toJob);
+export interface JobListItem extends Job {
+  companyName: string;
 }
 
-export async function loadMyJobs(supabase: Client, companyId: string): Promise<Job[]> {
+export interface JobDetail extends Job {
+  companyName: string;
+  trustLevel: string;
+  trustScore: number;
+}
+
+/** 案件の会社名・信用レベルは自社しか見えないcompaniesではなく、公開ビューから引く。 */
+async function attachCompanyNames(supabase: Client, jobs: Job[]): Promise<JobListItem[]> {
+  if (jobs.length === 0) return [];
+  const companyIds = [...new Set(jobs.map((j) => j.companyId))];
+  const { data: companies } = await supabase.from("companies_public").select("id, name").in("id", companyIds);
+  const nameById = new Map((companies ?? []).map((c) => [c.id, c.name]));
+  return jobs.map((j) => ({ ...j, companyName: nameById.get(j.companyId) ?? "—" }));
+}
+
+export async function loadOpenJobs(supabase: Client): Promise<JobListItem[]> {
+  const { data } = await supabase.from("jobs").select("*").eq("status", "open").order("posted_at", { ascending: false });
+  return attachCompanyNames(supabase, (data ?? []).map(toJob));
+}
+
+export async function loadMyJobs(supabase: Client, companyId: string): Promise<JobListItem[]> {
   const { data } = await supabase
     .from("jobs")
     .select("*")
     .eq("company_id", companyId)
     .order("posted_at", { ascending: false });
-  return (data ?? []).map(toJob);
+  return attachCompanyNames(supabase, (data ?? []).map(toJob));
 }
 
-export async function loadJob(supabase: Client, id: string): Promise<Job | null> {
+export async function loadJob(supabase: Client, id: string): Promise<JobDetail | null> {
   const { data } = await supabase.from("jobs").select("*").eq("id", id).maybeSingle();
-  return data ? toJob(data) : null;
+  if (!data) return null;
+  const job = toJob(data);
+  const { data: company } = await supabase
+    .from("companies_public")
+    .select("name, trust_level, trust_score")
+    .eq("id", job.companyId)
+    .maybeSingle();
+  return {
+    ...job,
+    companyName: company?.name ?? "—",
+    trustLevel: company?.trust_level ?? "未認証",
+    trustScore: company?.trust_score ?? 0,
+  };
 }
 
 export async function insertJob(

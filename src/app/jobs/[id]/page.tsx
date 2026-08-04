@@ -13,7 +13,7 @@ import { recordJobDetailViewAction } from "@/app/actions/job";
 import { can } from "@/domain/auth/Permission";
 import { canApply } from "@/domain/job/Job";
 import { yen } from "@/domain/shared/money";
-import { range } from "@/domain/shared/date";
+import { range, fmt } from "@/domain/shared/date";
 
 const KEISHIKI_LABEL = { ukeoi: "請負", ouen: "応援（常用）" } as const;
 const STATUS_LABEL = { open: "募集中", paused: "停止中", closed: "終了" } as const;
@@ -44,15 +44,20 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
             <Chip color={job.status === "open" ? C.midori : C.usu}>{STATUS_LABEL[job.status]}</Chip>
             <Chip color={C.usu}>{KEISHIKI_LABEL[job.keishiki]}</Chip>
           </div>
+          <Row label="発注者" value={job.companyName} />
+          <Row label="信用" value={job.trustLevel} />
           <Row label="業種" value={job.industry} />
           <Row label="エリア" value={job.area} />
           {job.siteAddress && <Row label="現場住所" value={job.siteAddress} />}
           {(job.kokiFrom || job.kokiTo) && <Row label="工期" value={range(job.kokiFrom, job.kokiTo)} />}
           {(job.boshuFrom || job.boshuTo) && <Row label="募集期間" value={range(job.boshuFrom, job.boshuTo)} />}
-          <Row
-            label={job.keishiki === "ouen" ? "人工単価" : "金額"}
-            value={job.keishiki === "ouen" ? `${yen(job.tanka)}／人工` : job.price > 0 ? yen(job.price) : "応相談"}
-          />
+          {job.keishiki === "ouen" ? (
+            <Row label="人工単価" value={`${yen(job.tanka)}／人工`} />
+          ) : job.priceMode === "mitsumori" ? (
+            <Row label="見積提出期限" value={fmt(job.quoteDue)} />
+          ) : (
+            <Row label="指値" value={job.price > 0 ? yen(job.price) : "応相談"} />
+          )}
           {job.headcount > 0 && <Row label="必要人数" value={`${job.headcount}人`} />}
           {job.paymentTerms && <Row label="支払条件" value={job.paymentTerms} />}
         </DenpyoCard>
