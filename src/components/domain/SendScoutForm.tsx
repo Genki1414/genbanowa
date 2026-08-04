@@ -12,10 +12,20 @@ import { sendScoutAction } from "@/app/actions/scout";
 
 const KIND_OPTIONS = ["スカウト", "見積依頼"] as const;
 
-export function SendScoutForm({ jobId, jobName }: { jobId?: string; jobName?: string }) {
+export function SendScoutForm({
+  jobId,
+  jobName,
+  availabilityId,
+  preselectedCompany,
+}: {
+  jobId?: string;
+  jobName?: string;
+  availabilityId?: string;
+  preselectedCompany?: { id: string; name: string };
+}) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<{ id: string; name: string }[] | null>(null);
-  const [selected, setSelected] = useState<{ id: string; name: string } | null>(null);
+  const [selected, setSelected] = useState<{ id: string; name: string } | null>(preselectedCompany ?? null);
   const [kindLabel, setKindLabel] = useState<(typeof KIND_OPTIONS)[number]>("スカウト");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -40,7 +50,7 @@ export function SendScoutForm({ jobId, jobName }: { jobId?: string; jobName?: st
     if (!selected) return;
     setError("");
     startTransition(async () => {
-      const r = await sendScoutAction({ toCompanyId: selected.id, kind, message, jobId });
+      const r = await sendScoutAction({ toCompanyId: selected.id, kind, message, jobId, availabilityId });
       if (!r.ok) {
         setError(r.error);
         return;

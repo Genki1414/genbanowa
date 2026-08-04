@@ -237,13 +237,29 @@ export async function insertApplication(
   });
 }
 
-export async function loadOpenAvailabilities(supabase: Client): Promise<Availability[]> {
+export interface AvailabilityListItem extends Availability {
+  companyName: string;
+}
+
+export async function loadOpenAvailabilities(supabase: Client): Promise<AvailabilityListItem[]> {
   const { data } = await supabase
     .from("availabilities")
     .select("*")
     .eq("status", "open")
     .order("posted_at", { ascending: false });
-  return (data ?? []).map(toAvailability);
+  const availabilities = (data ?? []).map(toAvailability);
+  if (availabilities.length === 0) return [];
+
+  const companyIds = [...new Set(availabilities.map((a) => a.companyId))];
+  const { data: companies } = await supabase.from("companies_public").select("id, name").in("id", companyIds);
+  const nameById = new Map((companies ?? []).map((c) => [c.id, c.name]));
+
+  return availabilities.map((a) => ({ ...a, companyName: nameById.get(a.companyId) ?? "—" }));
+}
+
+export async function loadAvailability(supabase: Client, id: string): Promise<Availability | null> {
+  const { data } = await supabase.from("availabilities").select("*").eq("id", id).maybeSingle();
+  return data ? toAvailability(data) : null;
 }
 
 export async function loadMyAvailabilities(supabase: Client, companyId: string): Promise<Availability[]> {
