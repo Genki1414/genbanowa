@@ -241,20 +241,21 @@ export interface AvailabilityListItem extends Availability {
   companyName: string;
 }
 
+async function attachAvailabilityCompanyNames(supabase: Client, availabilities: Availability[]): Promise<AvailabilityListItem[]> {
+  if (availabilities.length === 0) return [];
+  const companyIds = [...new Set(availabilities.map((a) => a.companyId))];
+  const { data: companies } = await supabase.from("companies_public").select("id, name").in("id", companyIds);
+  const nameById = new Map((companies ?? []).map((c) => [c.id, c.name]));
+  return availabilities.map((a) => ({ ...a, companyName: nameById.get(a.companyId) ?? "—" }));
+}
+
 export async function loadOpenAvailabilities(supabase: Client): Promise<AvailabilityListItem[]> {
   const { data } = await supabase
     .from("availabilities")
     .select("*")
     .eq("status", "open")
     .order("posted_at", { ascending: false });
-  const availabilities = (data ?? []).map(toAvailability);
-  if (availabilities.length === 0) return [];
-
-  const companyIds = [...new Set(availabilities.map((a) => a.companyId))];
-  const { data: companies } = await supabase.from("companies_public").select("id, name").in("id", companyIds);
-  const nameById = new Map((companies ?? []).map((c) => [c.id, c.name]));
-
-  return availabilities.map((a) => ({ ...a, companyName: nameById.get(a.companyId) ?? "—" }));
+  return attachAvailabilityCompanyNames(supabase, (data ?? []).map(toAvailability));
 }
 
 export async function loadAvailability(supabase: Client, id: string): Promise<Availability | null> {
@@ -262,13 +263,13 @@ export async function loadAvailability(supabase: Client, id: string): Promise<Av
   return data ? toAvailability(data) : null;
 }
 
-export async function loadMyAvailabilities(supabase: Client, companyId: string): Promise<Availability[]> {
+export async function loadMyAvailabilities(supabase: Client, companyId: string): Promise<AvailabilityListItem[]> {
   const { data } = await supabase
     .from("availabilities")
     .select("*")
     .eq("company_id", companyId)
     .order("posted_at", { ascending: false });
-  return (data ?? []).map(toAvailability);
+  return attachAvailabilityCompanyNames(supabase, (data ?? []).map(toAvailability));
 }
 
 export async function insertAvailability(
