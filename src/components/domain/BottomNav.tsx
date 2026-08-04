@@ -21,7 +21,9 @@ export async function BottomNav() {
   ]);
 
   const unread = list.reduce((n, c) => n + c.unread, 0);
-  const showTransactions = (company?.unlocked_features ?? []).includes("transactions");
+  const unlocked = company?.unlocked_features ?? [];
+  const showTransactions = unlocked.includes("transactions");
+  const showPhotos = unlocked.includes("photos") && can(actor.role, "photo.view");
 
   const tabs: NavTabData[] = [
     { key: "jobs", label: "案件", href: "/jobs", icon: "Briefcase" },
@@ -29,6 +31,9 @@ export async function BottomNav() {
   ];
   if (showTransactions) {
     tabs.push({ key: "transactions", label: "取引", href: "/transactions", icon: "FileText" });
+  }
+  if (showPhotos) {
+    tabs.push({ key: "sites", label: "写真", href: "/sites", icon: "Camera" });
   }
   if (can(actor.role, "user.invite")) {
     tabs.push({ key: "members", label: "メンバー", href: "/me/members", icon: "Users" });

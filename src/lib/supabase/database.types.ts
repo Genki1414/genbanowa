@@ -262,6 +262,30 @@ type SiteAssignmentRow = {
   assigned_at: string;
 };
 
+type SiteRow = {
+  id: string;
+  company_id: string;
+  transaction_id: string | null;
+  name: string;
+  address: string | null;
+  created_at: string;
+  archived_at: string | null;
+};
+
+type PhotoRow = {
+  id: string;
+  site_id: string;
+  koushu: string;
+  koutei: "着手前" | "施工中" | "施工後" | "完了検査";
+  spot: string | null;
+  shot_at: string;
+  gps: string | null;
+  file_path: string;
+  raw_path: string | null;
+  sha256: string | null;
+  created_at: string;
+};
+
 export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "12";
@@ -330,6 +354,17 @@ export type Database = {
       >;
       job_detail_views: Table<JobDetailViewRow, Partial<JobDetailViewRow> & { company_id: string; job_id: string }>;
       site_assignments: Table<SiteAssignmentRow, { transaction_id: string; user_id: string; assigned_at?: string }>;
+      sites: Table<SiteRow, Partial<SiteRow> & { company_id: string; name: string }>;
+      photos: Table<
+        PhotoRow,
+        Partial<PhotoRow> & {
+          site_id: string;
+          koushu: string;
+          koutei: "着手前" | "施工中" | "施工後" | "完了検査";
+          shot_at: string;
+          file_path: string;
+        }
+      >;
       trust_documents: Table<
         TrustDocumentRow,
         Partial<TrustDocumentRow> & { company_id: string; kind: TrustDocKind }
