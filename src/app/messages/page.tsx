@@ -8,7 +8,6 @@ import { currentActor } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { loadConversationList } from "@/lib/supabase/conversationRepo";
 import { fmt } from "@/domain/shared/date";
-import { BottomNav } from "@/components/domain/BottomNav";
 
 export default async function MessagesPage() {
   const actor = await currentActor();
@@ -27,7 +26,7 @@ export default async function MessagesPage() {
           </Link>
         }
       />
-      <main className="max-w-md mx-auto p-3 pb-20">
+      <main className="max-w-md mx-auto p-3">
         {list.length === 0 && (
           <p className="text-[12px]" style={{ color: C.usu }}>
             まだやり取りがありません。「+ 新規」から会社にメッセージを送れます。
@@ -61,7 +60,6 @@ export default async function MessagesPage() {
           </Link>
         ))}
       </main>
-      <BottomNav />
     </div>
   );
 }

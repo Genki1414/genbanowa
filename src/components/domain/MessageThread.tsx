@@ -55,7 +55,7 @@ export function MessageThread({
 
   return (
     <>
-      <div className="flex-1 p-3 pb-32 overflow-y-auto">
+      <div className="flex-1 p-3 pb-40 overflow-y-auto">
         {messages.length === 0 && (
           <p className="text-[13px] py-10 text-center" style={{ color: C.usu }}>
             まだやり取りはありません。
@@ -85,7 +85,7 @@ export function MessageThread({
       </div>
 
       {canSend && (
-        <div className="fixed bottom-0 left-1/2 w-full max-w-md z-40" style={{ transform: "translateX(-50%)", background: C.kami, borderTop: `1px solid ${C.keisen}` }}>
+        <div className="fixed bottom-14 left-1/2 w-full max-w-md z-40" style={{ transform: "translateX(-50%)", background: C.kami, borderTop: `1px solid ${C.keisen}` }}>
           {attachOpen && canRequestTransaction && (
             <div className="p-2" style={{ borderBottom: `1px solid ${C.keisen}` }}>
               <Link
