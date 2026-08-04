@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireActor } from "@/lib/auth";
@@ -64,24 +65,28 @@ export async function createTransactionAction(
   }
   const ukeCompanyId = conv.company_a === actor.companyId ? conv.company_b : conv.company_a;
 
-  const { data: txRow, error: txError } = await supabase
-    .from("transactions")
-    .insert({
-      conversation_id: conversationId,
-      job_id: conv.job_id,
-      moto_company: actor.companyId,
-      uke_company: ukeCompanyId,
-      title: input.title,
-      closing_day: input.closingDay ?? null,
-      payment_terms: input.paymentTerms,
-      status: "active",
-    })
-    .select("id, created_at")
-    .single();
-  if (txError || !txRow) return err(txError?.message ?? "CREATE_FAILED");
+  // transactions の SELECT ポリシー（can_see_transaction → is_tx_party）は自己参照のSELECTで
+  // 判定するため、INSERT直後に .select() で行を返そうとする（INSERT ... RETURNING）と、
+  // その行がまだ見えず必ずRLS違反になる。IDをアプリ側で先に決めて .select() を使わない。
+  const transactionId = randomUUID();
+  const now = new Date().toISOString();
+
+  const { error: txError } = await supabase.from("transactions").insert({
+    id: transactionId,
+    conversation_id: conversationId,
+    job_id: conv.job_id,
+    moto_company: actor.companyId,
+    uke_company: ukeCompanyId,
+    title: input.title,
+    closing_day: input.closingDay ?? null,
+    payment_terms: input.paymentTerms,
+    status: "active",
+    created_at: now,
+  });
+  if (txError) return err(txError.message);
 
   const tx = Transaction.create({
-    id: txRow.id,
+    id: transactionId,
     title: input.title,
     motoCompanyId: actor.companyId,
     ukeCompanyId,
@@ -92,21 +97,20 @@ export async function createTransactionAction(
     orderRequests: [],
     dailyReports: [],
     invoices: [],
-    createdAt: txRow.created_at,
+    createdAt: now,
     completedAt: null,
   });
 
-  const now = new Date().toISOString();
   const result = tx.addOrder(input, actor, now);
   if (!result.ok) {
-    await supabase.from("transactions").delete().eq("id", txRow.id);
+    await supabase.from("transactions").delete().eq("id", transactionId);
     return err(result.error);
   }
 
   const newOrder = result.value.orders[0];
-  const { error: orderError } = await insertOrderRow(supabase, txRow.id, newOrder);
+  const { error: orderError } = await insertOrderRow(supabase, transactionId, newOrder);
   if (orderError) {
-    await supabase.from("transactions").delete().eq("id", txRow.id);
+    await supabase.from("transactions").delete().eq("id", transactionId);
     return err(orderError.message);
   }
 
@@ -114,7 +118,7 @@ export async function createTransactionAction(
   await unlockForBoth(supabase, actor.companyId, ukeCompanyId, "transactions");
 
   revalidatePath("/transactions");
-  return ok({ transactionId: txRow.id });
+  return ok({ transactionId });
 }
 
 export async function addOrderAction(txId: string, input: AddOrderInput): Promise<Result<null>> {
