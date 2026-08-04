@@ -129,6 +129,61 @@ type ConversationRow = {
   created_at: string;
 };
 
+type JobRow = {
+  id: string;
+  company_id: string;
+  name: string;
+  keishiki: "ukeoi" | "ouen";
+  industry: string;
+  area: string;
+  site_address: string | null;
+  scale: string | null;
+  koki_from: string | null;
+  koki_to: string | null;
+  boshu_from: string | null;
+  boshu_to: string | null;
+  price_mode: "sashine" | "mitsumori" | null;
+  price: number | null;
+  quote_due: string | null;
+  tanka: number | null;
+  headcount: number | null;
+  payment_terms: string | null;
+  is_public_work: boolean;
+  status: "open" | "paused" | "closed";
+  posted_at: string;
+};
+
+type JobApplicationRow = {
+  id: string;
+  job_id: string;
+  company_id: string;
+  amount: number | null;
+  message: string | null;
+  conversation_id: string | null;
+  created_at: string;
+};
+
+type AvailabilityRow = {
+  id: string;
+  company_id: string;
+  kind: "ninku" | "waku";
+  industry: string;
+  area: string;
+  from_date: string;
+  to_date: string;
+  headcount: number | null;
+  tanka: number | null;
+  note: string | null;
+  status: "open" | "withdrawn" | "expired";
+  posted_at: string;
+};
+
+type JobDetailViewRow = {
+  company_id: string;
+  job_id: string;
+  viewed_at: string;
+};
+
 type MessageRow = {
   id: string;
   conversation_id: string;
@@ -196,6 +251,13 @@ export type Database = {
         MessageRow,
         Partial<MessageRow> & { conversation_id: string; sender_company: string }
       >;
+      jobs: Table<JobRow, Partial<JobRow> & { company_id: string; name: string; keishiki: "ukeoi" | "ouen"; industry: string; area: string }>;
+      job_applications: Table<JobApplicationRow, Partial<JobApplicationRow> & { job_id: string; company_id: string }>;
+      availabilities: Table<
+        AvailabilityRow,
+        Partial<AvailabilityRow> & { company_id: string; kind: "ninku" | "waku"; industry: string; area: string; from_date: string; to_date: string }
+      >;
+      job_detail_views: Table<JobDetailViewRow, Partial<JobDetailViewRow> & { company_id: string; job_id: string }>;
       site_assignments: Table<SiteAssignmentRow, { transaction_id: string; user_id: string; assigned_at?: string }>;
     };
     Views: {

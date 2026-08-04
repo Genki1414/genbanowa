@@ -23,7 +23,10 @@ export async function BottomNav() {
   const unread = list.reduce((n, c) => n + c.unread, 0);
   const showTransactions = (company?.unlocked_features ?? []).includes("transactions");
 
-  const tabs: NavTabData[] = [{ key: "messages", label: "メッセージ", href: "/messages", icon: "MessageSquare", badge: unread }];
+  const tabs: NavTabData[] = [
+    { key: "jobs", label: "案件", href: "/jobs", icon: "Briefcase" },
+    { key: "messages", label: "メッセージ", href: "/messages", icon: "MessageSquare", badge: unread },
+  ];
   if (showTransactions) {
     tabs.push({ key: "transactions", label: "取引", href: "/transactions", icon: "FileText" });
   }
