@@ -246,6 +246,27 @@ values (
 );
 
 -- ============================================================
+-- 段階開放のバックフィル
+-- ============================================================
+-- unlocked_features は本来アプリの操作（注文書を送る→'transactions'、請書を返す→'photos'）の
+-- たびに unlock_feature() で追加されるが、シードは insert で直接投入するためその処理を経ない。
+-- シードの実態（取引・請書の状態）に合わせてここで揃えておく。
+
+update companies set unlocked_features = array(select distinct unnest(unlocked_features || 'transactions'))
+where id in (
+  select moto_company from transactions
+  union
+  select uke_company from transactions
+);
+
+update companies set unlocked_features = array(select distinct unnest(unlocked_features || 'photos'))
+where id in (
+  select t.moto_company from transactions t join orders o on o.transaction_id = t.id where o.accepted_at is not null
+  union
+  select t.uke_company from transactions t join orders o on o.transaction_id = t.id where o.accepted_at is not null
+);
+
+-- ============================================================
 -- 取引先（アプリ外含む）
 -- ============================================================
 
