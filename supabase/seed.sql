@@ -252,14 +252,14 @@ values (
 -- たびに unlock_feature() で追加されるが、シードは insert で直接投入するためその処理を経ない。
 -- シードの実態（取引・請書の状態）に合わせてここで揃えておく。
 
-update companies set unlocked_features = array(select distinct unnest(unlocked_features || 'transactions'))
+update companies set unlocked_features = array(select distinct unnest(unlocked_features || 'transactions'::text))
 where id in (
   select moto_company from transactions
   union
   select uke_company from transactions
 );
 
-update companies set unlocked_features = array(select distinct unnest(unlocked_features || 'photos'))
+update companies set unlocked_features = array(select distinct unnest(unlocked_features || 'photos'::text))
 where id in (
   select t.moto_company from transactions t join orders o on o.transaction_id = t.id where o.accepted_at is not null
   union
