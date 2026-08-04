@@ -6,6 +6,7 @@ const baseJob: Job = {
   companyId: "companyA",
   name: "五井中央 共同住宅 外部足場",
   keishiki: "ukeoi",
+  jisu: "1次下請",
   industry: "足場",
   area: "千葉県",
   price: 2000000,

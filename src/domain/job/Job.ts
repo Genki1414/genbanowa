@@ -4,12 +4,15 @@
  */
 export type JobKeishiki = "ukeoi" | "ouen";
 export type JobStatus = "open" | "paused" | "closed";
+/** 受注する側の下請次数。単価に直結する重要情報として募集時に必須で申告してもらう。 */
+export type SubcontractTier = "1次下請" | "2次下請" | "3次下請";
 
 export interface Job {
   id: string;
   companyId: string;
   name: string;
   keishiki: JobKeishiki;
+  jisu: SubcontractTier;
   industry: string;
   area: string;
   siteAddress?: string;

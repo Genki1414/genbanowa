@@ -11,10 +11,12 @@ import { postJobAction } from "@/app/actions/job";
 
 const KEISHIKI_OPTIONS = ["請負", "応援（常用）"] as const;
 const PRICE_MODE_OPTIONS = ["指値", "見積依頼"] as const;
+const JISU_OPTIONS = ["1次下請", "2次下請", "3次下請"] as const;
 
 export function NewJobForm() {
   const [name, setName] = useState("");
   const [keishikiLabel, setKeishikiLabel] = useState<(typeof KEISHIKI_OPTIONS)[number]>("請負");
+  const [jisu, setJisu] = useState<(typeof JISU_OPTIONS)[number]>("1次下請");
   const [industry, setIndustry] = useState("");
   const [area, setArea] = useState("");
   const [siteAddress, setSiteAddress] = useState("");
@@ -42,6 +44,7 @@ export function NewJobForm() {
       const r = await postJobAction({
         name,
         keishiki,
+        jisu,
         industry,
         area,
         siteAddress: siteAddress || undefined,
@@ -73,6 +76,15 @@ export function NewJobForm() {
           形態
         </span>
         <Radio options={[...KEISHIKI_OPTIONS]} value={keishikiLabel} onChange={(v) => setKeishikiLabel(v as (typeof KEISHIKI_OPTIONS)[number])} />
+      </div>
+      <div className="mb-3">
+        <span className="block text-[11px] font-bold mb-1" style={{ color: C.usu }}>
+          受注する側の下請次数
+        </span>
+        <Radio options={[...JISU_OPTIONS]} value={jisu} onChange={(v) => setJisu(v as (typeof JISU_OPTIONS)[number])} />
+        <span className="block text-[11px] mt-1" style={{ color: C.usu }}>
+          単価に直結する情報です。正直に出すほど応募が集まります
+        </span>
       </div>
       <Field label="業種" value={industry} onChange={setIndustry} placeholder="例）足場" />
       <Field label="エリア" value={area} onChange={setArea} placeholder="例）千葉県" />

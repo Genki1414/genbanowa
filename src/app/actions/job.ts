@@ -28,6 +28,7 @@ import { findExistingConversation, conversationsStartedThisMonth, insertMessage 
 export async function postJobAction(input: {
   name: string;
   keishiki: "ukeoi" | "ouen";
+  jisu: "1次下請" | "2次下請" | "3次下請";
   industry: string;
   area: string;
   siteAddress?: string;

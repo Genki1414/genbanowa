@@ -13,6 +13,7 @@ import { yen } from "@/domain/shared/money";
 import { range, fmt } from "@/domain/shared/date";
 
 const KEISHIKI_LABEL = { ukeoi: "請負", ouen: "応援（常用）" } as const;
+const JISU_COLOR = { "1次下請": C.midori, "2次下請": C.usu, "3次下請": C.aka } as const;
 
 export default async function JobsPage() {
   const actor = await currentActor();
@@ -57,9 +58,13 @@ export default async function JobsPage() {
                 {j.companyName}
               </div>
               <div className="flex items-center gap-2 flex-wrap mb-1">
+                <Chip solid color={JISU_COLOR[j.jisu]}>
+                  {j.jisu}
+                </Chip>
                 <Chip color={C.usu}>{KEISHIKI_LABEL[j.keishiki]}</Chip>
                 <Chip color={C.usu}>{j.industry}</Chip>
                 <Chip color={C.usu}>{j.area}</Chip>
+                {j.isPublicWork && <Chip color={C.sumi}>公共事業</Chip>}
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-[13px] font-bold" style={{ color: C.sumi }}>

@@ -151,6 +151,7 @@ type JobRow = {
   is_public_work: boolean;
   status: "open" | "paused" | "closed";
   posted_at: string;
+  jisu: "1次下請" | "2次下請" | "3次下請";
 };
 
 type JobApplicationRow = {
@@ -251,7 +252,17 @@ export type Database = {
         MessageRow,
         Partial<MessageRow> & { conversation_id: string; sender_company: string }
       >;
-      jobs: Table<JobRow, Partial<JobRow> & { company_id: string; name: string; keishiki: "ukeoi" | "ouen"; industry: string; area: string }>;
+      jobs: Table<
+        JobRow,
+        Partial<JobRow> & {
+          company_id: string;
+          name: string;
+          keishiki: "ukeoi" | "ouen";
+          industry: string;
+          area: string;
+          jisu: "1次下請" | "2次下請" | "3次下請";
+        }
+      >;
       job_applications: Table<JobApplicationRow, Partial<JobApplicationRow> & { job_id: string; company_id: string }>;
       availabilities: Table<
         AvailabilityRow,

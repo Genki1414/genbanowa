@@ -74,29 +74,29 @@ update companies set plan = 'std' where name = '丸和塗装';
 
 insert into jobs (company_id, name, keishiki, industry, area, site_address, scale,
   koki_from, koki_to, boshu_from, boshu_to, price_mode, price, quote_due, tanka, headcount,
-  payment_terms, is_public_work, status, posted_at)
+  payment_terms, is_public_work, status, posted_at, jisu)
 values
   ((select id from companies where name = '京葉建設工業'), '五井中央 共同住宅 外部足場', 'ukeoi', '足場',
    '千葉県市原市', '市原市五井中央西2-1-8', '1,240㎡', '2026-09-01', '2026-09-20',
-   '2026-08-01', '2026-08-25', 'sashine', 1860000, null, 0, 0, '翌月末', false, 'open', '2026-08-01'),
+   '2026-08-01', '2026-08-25', 'sashine', 1860000, null, 0, 0, '翌月末', false, 'open', '2026-08-01', '1次下請'),
   ((select id from companies where name = '北千住リフォーム'), '千住 戸建 外壁塗装', 'ukeoi', '塗装',
    '東京都足立区', '足立区千住3-14-2', '780㎡', '2026-09-08', '2026-09-30',
-   '2026-07-28', '2026-08-20', 'mitsumori', 0, '2026-08-20', 0, 0, '翌々月10日', false, 'paused', '2026-07-28'),
+   '2026-07-28', '2026-08-20', 'mitsumori', 0, '2026-08-20', 0, 0, '翌々月10日', false, 'paused', '2026-07-28', '2次下請'),
   ((select id from companies where name = '彩北総業'), '川口栄町 木造解体', 'ukeoi', '解体',
    '埼玉県川口市', '川口市栄町3-2-11', '木造2階1棟', '2026-10-01', '2026-10-15',
-   '2026-08-05', '2026-09-10', 'sashine', 2400000, null, 0, 0, '翌月末', false, 'open', '2026-08-05'),
+   '2026-08-05', '2026-09-10', 'sashine', 2400000, null, 0, 0, '翌月末', false, 'open', '2026-08-05', '1次下請'),
   ((select id from companies where name = '湾岸工業'), '船橋 現場応援（足場 常用）', 'ouen', '足場',
    '千葉県船橋市', '船橋市浜町2-1-1', '3人/日', '2026-08-25', '2026-09-12',
-   '2026-08-10', '2026-08-22', 'sashine', 0, null, 22000, 3, '翌月末', false, 'open', '2026-08-10'),
+   '2026-08-10', '2026-08-22', 'sashine', 0, null, 22000, 3, '翌月末', false, 'open', '2026-08-10', '2次下請'),
   ((select id from companies where name = '東和内装'), '浦安 事務所ビル 内装解体', 'ukeoi', '内装',
    '千葉県浦安市', '浦安市入船4-1-1', '420㎡', '2026-08-20', '2026-08-31',
-   '2026-07-10', '2026-07-31', 'mitsumori', 0, '2026-07-25', 0, 0, '翌月末', false, 'closed', '2026-07-10'),
+   '2026-07-10', '2026-07-31', 'mitsumori', 0, '2026-07-25', 0, 0, '翌月末', false, 'closed', '2026-07-10', '3次下請'),
   ((select id from companies where name = '高橋工業'), '市川 倉庫 外部足場', 'ukeoi', '足場',
    '千葉県市川市', '市川市塩浜2-1-1', '860㎡', '2026-09-05', '2026-09-18',
-   '2026-08-08', '2026-08-24', 'mitsumori', 0, '2026-08-25', 0, 0, '翌月末', false, 'open', '2026-08-08'),
+   '2026-08-08', '2026-08-24', 'mitsumori', 0, '2026-08-25', 0, 0, '翌月末', false, 'open', '2026-08-08', '1次下請'),
   ((select id from companies where name = '京葉建設工業'), '市原市営住宅 外壁改修 仮設足場', 'ukeoi', '足場',
    '千葉県市原市', '市原市辰巳台東3-1', '2,340㎡', '2026-10-05', '2026-11-14',
-   '2026-08-14', '2026-09-05', 'sashine', 3420000, null, 0, 0, '翌月末', true, 'open', '2026-08-14');
+   '2026-08-14', '2026-09-05', 'sashine', 3420000, null, 0, 0, '翌月末', true, 'open', '2026-08-14', '1次下請');
 
 -- 応募（案件6・自社案件への応募）
 insert into job_applications (job_id, company_id, amount, message, created_at)

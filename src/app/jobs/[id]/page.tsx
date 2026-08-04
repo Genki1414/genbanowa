@@ -17,6 +17,7 @@ import { range, fmt } from "@/domain/shared/date";
 
 const KEISHIKI_LABEL = { ukeoi: "請負", ouen: "応援（常用）" } as const;
 const STATUS_LABEL = { open: "募集中", paused: "停止中", closed: "終了" } as const;
+const JISU_COLOR = { "1次下請": C.midori, "2次下請": C.usu, "3次下請": C.aka } as const;
 
 export default async function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -42,7 +43,11 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
         <DenpyoCard tone="plain">
           <div className="flex items-center gap-2 flex-wrap mb-2">
             <Chip color={job.status === "open" ? C.midori : C.usu}>{STATUS_LABEL[job.status]}</Chip>
+            <Chip solid color={JISU_COLOR[job.jisu]}>
+              {job.jisu}
+            </Chip>
             <Chip color={C.usu}>{KEISHIKI_LABEL[job.keishiki]}</Chip>
+            {job.isPublicWork && <Chip color={C.sumi}>公共事業</Chip>}
           </div>
           <Row label="発注者" value={job.companyName} />
           <Row label="信用" value={job.trustLevel} />

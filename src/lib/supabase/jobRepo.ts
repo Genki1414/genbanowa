@@ -14,6 +14,7 @@ function toJob(row: JobRow): Job {
     companyId: row.company_id,
     name: row.name,
     keishiki: row.keishiki,
+    jisu: row.jisu,
     industry: row.industry,
     area: row.area,
     siteAddress: row.site_address ?? undefined,
@@ -119,6 +120,7 @@ export async function insertJob(
   input: {
     name: string;
     keishiki: "ukeoi" | "ouen";
+    jisu: "1次下請" | "2次下請" | "3次下請";
     industry: string;
     area: string;
     siteAddress?: string;
@@ -140,6 +142,7 @@ export async function insertJob(
     company_id: companyId,
     name: input.name,
     keishiki: input.keishiki,
+    jisu: input.jisu,
     industry: input.industry,
     area: input.area,
     site_address: input.siteAddress ?? null,
