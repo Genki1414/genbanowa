@@ -232,6 +232,19 @@ type StandaloneDocumentRow = {
   created_at: string;
 };
 
+type ScoutRow = {
+  id: string;
+  from_company: string;
+  to_company: string;
+  kind: "scout" | "quote_request";
+  job_id: string | null;
+  availability_id: string | null;
+  message: string;
+  opened_at: string | null;
+  replied_at: string | null;
+  created_at: string;
+};
+
 type MessageRow = {
   id: string;
   conversation_id: string;
@@ -322,6 +335,10 @@ export type Database = {
         Partial<TrustDocumentRow> & { company_id: string; kind: TrustDocKind }
       >;
       trust_doc_points: Table<TrustDocPointRow, TrustDocPointRow>;
+      scouts: Table<
+        ScoutRow,
+        Partial<ScoutRow> & { from_company: string; to_company: string; kind: "scout" | "quote_request"; message: string }
+      >;
       partners: Table<PartnerRow, Partial<PartnerRow> & { company_id: string; name: string }>;
       standalone_documents: Table<
         StandaloneDocumentRow,
@@ -377,6 +394,7 @@ export type Database = {
         Returns: string;
       };
       unlock_feature: { Args: { p_company: string; p_key: string }; Returns: undefined };
+      consume_invite_point: { Args: { p_scout_id: string }; Returns: undefined };
     };
   };
 };

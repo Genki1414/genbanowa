@@ -31,6 +31,11 @@ export default async function JobsPage() {
             <Link href="/availabilities" className="text-[12px] font-bold" style={{ color: C.ki }}>
               空き情報
             </Link>
+            {can(actor.role, "scout.read") && (
+              <Link href="/scouts" className="text-[12px] font-bold" style={{ color: C.ki }}>
+                スカウト
+              </Link>
+            )}
             {can(actor.role, "job.post") && (
               <Link href="/jobs/new" className="text-[13px] font-bold px-2 py-1" style={{ color: C.ki }}>
                 + 投稿

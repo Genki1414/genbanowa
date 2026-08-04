@@ -5,6 +5,7 @@ import { BackHeader } from "@/components/domain/BackHeader";
 import { DenpyoCard } from "@/components/ui/DenpyoCard";
 import { Row } from "@/components/ui/Row";
 import { Chip } from "@/components/ui/Chip";
+import { Btn } from "@/components/ui/Btn";
 import { ApplyToJobForm } from "@/components/domain/ApplyToJobForm";
 import { currentActor } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -75,9 +76,16 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
         </DenpyoCard>
 
         {isOwnJob && (
-          <p className="text-[12px] mt-3" style={{ color: C.usu }}>
-            自社の案件です。
-          </p>
+          <div className="mt-3">
+            <p className="text-[12px] mb-2" style={{ color: C.usu }}>
+              自社の案件です。
+            </p>
+            {can(actor.role, "scout.send") && (
+              <Link href={`/scouts/new?job=${id}`}>
+                <Btn>協力業者にスカウトを送る</Btn>
+              </Link>
+            )}
+          </div>
         )}
 
         {application && (
