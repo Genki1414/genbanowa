@@ -5,9 +5,10 @@ import { Header } from "@/components/ui/Header";
 import { DenpyoCard } from "@/components/ui/DenpyoCard";
 import { Chip } from "@/components/ui/Chip";
 import { MineSection } from "@/components/domain/MineSection";
+import { JobFilterBar } from "@/components/domain/JobFilterBar";
 import { currentActor } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { loadOpenJobs } from "@/lib/supabase/jobRepo";
+import { loadOpenJobs, loadMyJobs } from "@/lib/supabase/jobRepo";
 import { JobListItem } from "@/lib/supabase/jobRepo";
 import { can } from "@/domain/auth/Permission";
 import { yen } from "@/domain/shared/money";
@@ -53,19 +54,42 @@ function JobCard({ job, mine }: { job: JobListItem; mine: boolean }) {
             </span>
           )}
         </div>
+        <div className="text-[10px] mt-1.5" style={{ color: C.usu }}>
+          投稿 {fmt(job.postedAt)}
+        </div>
       </DenpyoCard>
     </Link>
   );
 }
 
-export default async function JobsPage() {
+export default async function JobsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; area?: string; industry?: string; keishiki?: string; jisu?: string }>;
+}) {
   const actor = await currentActor();
   if (!actor) redirect("/login");
 
+  const { q = "", area = "すべて", industry = "すべて", keishiki = "すべて", jisu = "すべて" } = await searchParams;
+
   const supabase = await createClient();
-  const jobs = await loadOpenJobs(supabase);
-  const myJobs = jobs.filter((j) => j.companyId === actor.companyId);
-  const otherJobs = jobs.filter((j) => j.companyId !== actor.companyId);
+  const [openJobs, myJobs] = await Promise.all([loadOpenJobs(supabase), loadMyJobs(supabase, actor.companyId)]);
+
+  const areas = ["すべて", ...Array.from(new Set(openJobs.map((j) => j.area.slice(0, 3))))];
+  const industries = ["すべて", ...Array.from(new Set(openJobs.map((j) => j.industry)))];
+
+  const hasFilter = !!q || area !== "すべて" || industry !== "すべて" || keishiki !== "すべて" || jisu !== "すべて";
+
+  const otherJobs = openJobs
+    .filter((j) => j.companyId !== actor.companyId)
+    .filter(
+      (j) =>
+        (area === "すべて" || j.area.startsWith(area)) &&
+        (industry === "すべて" || j.industry === industry) &&
+        (keishiki === "すべて" || KEISHIKI_LABEL[j.keishiki] === keishiki) &&
+        (jisu === "すべて" || j.jisu === jisu) &&
+        (!q || (j.name + j.companyName + j.area + j.industry).includes(q)),
+    );
 
   return (
     <div className="min-h-screen" style={{ background: C.yojo }}>
@@ -90,15 +114,17 @@ export default async function JobsPage() {
         }
       />
       <main className="max-w-md mx-auto p-3">
+        <JobFilterBar areas={areas} industries={industries} initial={{ q, area, industry, keishiki, jisu }} />
+
         <MineSection label="自社の投稿" count={myJobs.length}>
           {myJobs.map((j) => (
             <JobCard key={j.id} job={j} mine />
           ))}
         </MineSection>
 
-        {otherJobs.length === 0 && myJobs.length === 0 && (
-          <p className="text-[12px]" style={{ color: C.usu }}>
-            今は募集中の案件がありません。
+        {otherJobs.length === 0 && (
+          <p className="text-[12px] py-6 text-center" style={{ color: C.usu }}>
+            {hasFilter ? "条件に合う案件がありません。絞り込みを変えてみてください。" : "今は募集中の案件がありません。"}
           </p>
         )}
         {otherJobs.map((j) => (
