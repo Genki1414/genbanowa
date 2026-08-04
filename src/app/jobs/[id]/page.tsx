@@ -49,7 +49,14 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
             <Chip color={C.usu}>{KEISHIKI_LABEL[job.keishiki]}</Chip>
             {job.isPublicWork && <Chip color={C.sumi}>公共事業</Chip>}
           </div>
-          <Row label="発注者" value={job.companyName} />
+          <Row
+            label="発注者"
+            value={
+              <Link href={`/companies/${job.companyId}`} className="underline">
+                {job.companyName}
+              </Link>
+            }
+          />
           <Row label="信用" value={job.trustLevel} />
           <Row label="業種" value={job.industry} />
           <Row label="エリア" value={job.area} />

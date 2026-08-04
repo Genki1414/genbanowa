@@ -8,10 +8,10 @@ import { DenpyoCard } from "@/components/ui/DenpyoCard";
 import { C } from "@/styles/tokens";
 import { searchCompaniesAction, startConversationAction } from "@/app/actions/conversation";
 
-export function StartConversationForm() {
+export function StartConversationForm({ preselected }: { preselected?: { id: string; name: string } }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<{ id: string; name: string }[] | null>(null);
-  const [selected, setSelected] = useState<{ id: string; name: string } | null>(null);
+  const [selected, setSelected] = useState<{ id: string; name: string } | null>(preselected ?? null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();

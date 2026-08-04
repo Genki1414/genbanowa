@@ -185,6 +185,53 @@ type JobDetailViewRow = {
   viewed_at: string;
 };
 
+export type TrustDocKind = "tohon" | "kaigyo" | "kyoka" | "hoken" | "baisho" | "invoice" | "ccus" | "hp";
+
+type TrustDocumentRow = {
+  id: string;
+  company_id: string;
+  kind: TrustDocKind;
+  file_path: string | null;
+  value: string | null;
+  status: "pending" | "approved" | "rejected";
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+};
+
+type TrustDocPointRow = {
+  kind: TrustDocKind;
+  points: number;
+  label: string;
+};
+
+type PartnerRow = {
+  id: string;
+  company_id: string;
+  linked_company: string | null;
+  name: string;
+  contact_name: string | null;
+  closing_day: string | null;
+  payment_terms: string | null;
+  email: string | null;
+  tel: string | null;
+  created_at: string;
+};
+
+type StandaloneDocumentRow = {
+  id: string;
+  company_id: string;
+  partner_id: string | null;
+  kind: "estimate" | "order" | "invoice";
+  title: string;
+  site_address: string | null;
+  koki: string | null;
+  amount: number;
+  tax: number;
+  pdf_path: string | null;
+  sent_at: string | null;
+  created_at: string;
+};
+
 type MessageRow = {
   id: string;
   conversation_id: string;
@@ -270,6 +317,22 @@ export type Database = {
       >;
       job_detail_views: Table<JobDetailViewRow, Partial<JobDetailViewRow> & { company_id: string; job_id: string }>;
       site_assignments: Table<SiteAssignmentRow, { transaction_id: string; user_id: string; assigned_at?: string }>;
+      trust_documents: Table<
+        TrustDocumentRow,
+        Partial<TrustDocumentRow> & { company_id: string; kind: TrustDocKind }
+      >;
+      trust_doc_points: Table<TrustDocPointRow, TrustDocPointRow>;
+      partners: Table<PartnerRow, Partial<PartnerRow> & { company_id: string; name: string }>;
+      standalone_documents: Table<
+        StandaloneDocumentRow,
+        Partial<StandaloneDocumentRow> & {
+          company_id: string;
+          kind: "estimate" | "order" | "invoice";
+          title: string;
+          amount: number;
+          tax: number;
+        }
+      >;
     };
     Views: {
       companies_public: {
@@ -287,6 +350,22 @@ export type Database = {
           trust_level: string;
           approved_doc_kinds: string[] | null;
         };
+        Relationships: [];
+      };
+      companies_stats: {
+        Row: { company_id: string; hacchu_count: number; jucchu_count: number; partner_count: number };
+        Relationships: [];
+      };
+      companies_rating: {
+        Row: { company_id: string; stars: number; note: string | null };
+        Relationships: [];
+      };
+      companies_url: {
+        Row: { company_id: string; url: string | null };
+        Relationships: [];
+      };
+      companies_payment: {
+        Row: { company_id: string; ontime_count: number; delay_count: number };
         Relationships: [];
       };
     };

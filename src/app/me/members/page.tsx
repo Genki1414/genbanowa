@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { C } from "@/styles/tokens";
 import { BackHeader } from "@/components/domain/BackHeader";
@@ -45,6 +46,16 @@ export default async function MembersPage() {
           メンバーを招待
         </h2>
         <InviteMemberForm />
+
+        <h2 className="text-[13px] font-extrabold mt-4 mb-2" style={{ color: C.sumi }}>
+          自社ページ・アプリ外の書類
+        </h2>
+        <Link href={`/companies/${actor.companyId}`} className="block text-[13px] font-bold underline mb-2" style={{ color: C.sumi }}>
+          自社ページを見る
+        </Link>
+        <Link href="/partners" className="block text-[13px] font-bold underline" style={{ color: C.sumi }}>
+          取引先（アプリ外）を管理する
+        </Link>
       </main>
       <BottomNav />
     </div>
