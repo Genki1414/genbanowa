@@ -6,6 +6,7 @@ import { DenpyoCard } from "@/components/ui/DenpyoCard";
 import { Chip } from "@/components/ui/Chip";
 import { TxStatusChip } from "@/components/domain/TxStatusChip";
 import { UserMenu } from "@/components/domain/UserMenu";
+import { BottomNav } from "@/components/domain/BottomNav";
 import { currentActor } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { loadTransactionSummaries } from "@/lib/supabase/transactionRepo";
@@ -23,18 +24,8 @@ export default async function TransactionsPage() {
 
   return (
     <div className="min-h-screen" style={{ background: C.yojo }}>
-      <Header
-        title="取引"
-        right={
-          <div className="flex items-center gap-3">
-            <Link href="/messages" className="text-[12px] font-bold" style={{ color: C.ki }}>
-              メッセージ
-            </Link>
-            <UserMenu name={actor.name} role={actor.role} />
-          </div>
-        }
-      />
-      <main className="max-w-md mx-auto p-3">
+      <Header title="取引" right={<UserMenu name={actor.name} role={actor.role} />} />
+      <main className="max-w-md mx-auto p-3 pb-20">
         {summaries.length === 0 && (
           <p className="text-[12px]" style={{ color: C.usu }}>
             まだ取引がありません。会話から注文書を送ると、ここに表示されます。
@@ -70,6 +61,7 @@ export default async function TransactionsPage() {
           </Link>
         ))}
       </main>
+      <BottomNav />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { BackHeader } from "@/components/domain/BackHeader";
 import { DenpyoCard } from "@/components/ui/DenpyoCard";
 import { Chip } from "@/components/ui/Chip";
 import { InviteMemberForm } from "@/components/domain/InviteMemberForm";
+import { BottomNav } from "@/components/domain/BottomNav";
 import { currentActor } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { can } from "@/domain/auth/Permission";
@@ -24,7 +25,7 @@ export default async function MembersPage() {
   return (
     <div className="min-h-screen" style={{ background: C.yojo }}>
       <BackHeader title="メンバー" />
-      <main className="max-w-md mx-auto p-3">
+      <main className="max-w-md mx-auto p-3 pb-20">
         <h2 className="text-[13px] font-extrabold mb-2" style={{ color: C.sumi }}>
           メンバー一覧
         </h2>
@@ -45,6 +46,7 @@ export default async function MembersPage() {
         </h2>
         <InviteMemberForm />
       </main>
+      <BottomNav />
     </div>
   );
 }
