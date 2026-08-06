@@ -6,6 +6,7 @@ export interface CurrentActor {
   companyId: string;
   role: Role;
   name: string;
+  isStaff: boolean;
 }
 
 /**
@@ -22,12 +23,12 @@ export async function currentActor(): Promise<CurrentActor | null> {
 
   const { data } = await supabase
     .from("users")
-    .select("id, company_id, role, name")
+    .select("id, company_id, role, name, is_staff")
     .eq("id", user.id)
     .maybeSingle();
   if (!data) return null;
 
-  return { userId: data.id, companyId: data.company_id, role: data.role as Role, name: data.name };
+  return { userId: data.id, companyId: data.company_id, role: data.role as Role, name: data.name, isStaff: data.is_staff };
 }
 
 export async function requireActor(): Promise<CurrentActor> {

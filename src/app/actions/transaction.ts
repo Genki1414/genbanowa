@@ -12,6 +12,7 @@ import {
   insertInvoiceRow,
   Client,
 } from "@/lib/supabase/transactionRepo";
+import { loadLatestDispute, transitionDispute, insertLog } from "@/lib/supabase/disputeRepo";
 import { Result, ok, err } from "@/domain/shared/result";
 import { can } from "@/domain/auth/Permission";
 import { checkQuota } from "@/domain/plan/Quota";
@@ -332,6 +333,13 @@ export async function confirmReceiptAction(
     .update({ status: "received", received_at: now, received_on: receivedOn })
     .eq("id", invoiceId);
   if (error) return err(error.message);
+
+  // 入金確認中のdisputeが残っていれば、実際に入金が確認できた時点で自動的に解決とする。
+  const openDispute = await loadLatestDispute(supabase, invoiceId);
+  if (openDispute && ["confirming", "date_proposed"].includes(openDispute.status)) {
+    await transitionDispute(supabase, openDispute.id, "resolved");
+    await insertLog(supabase, openDispute.id, "system", "入金が確認されたため、確認手続きを解決としました。");
+  }
 
   revalidatePath(`/transactions/${txId}`);
   return ok(null);

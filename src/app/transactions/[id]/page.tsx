@@ -8,6 +8,7 @@ import { TxStatusChip } from "@/components/domain/TxStatusChip";
 import { OrderCard } from "@/components/domain/OrderCard";
 import { OrderRequestCard } from "@/components/domain/OrderRequestCard";
 import { InvoiceCard } from "@/components/domain/InvoiceCard";
+import { DisputeCard } from "@/components/domain/DisputeCard";
 import { ReportList } from "@/components/domain/ReportList";
 import { SimpleActionButton } from "@/components/domain/SimpleActionButton";
 import { RejectOrderButton } from "@/components/domain/RejectOrderButton";
@@ -18,6 +19,7 @@ import { AssignmentManager } from "@/components/domain/AssignmentManager";
 import { currentActor } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { loadTransaction } from "@/lib/supabase/transactionRepo";
+import { loadLatestDisputesForInvoices, loadLogs } from "@/lib/supabase/disputeRepo";
 import { canSeeAmount } from "@/domain/auth/Role";
 import { can } from "@/domain/auth/Permission";
 import { transactionDisplayStatus } from "@/domain/transaction/Transaction";
@@ -71,6 +73,15 @@ export default async function TransactionDetailPage({ params }: { params: Promis
   const canRequestAdditional = actions.includes("order.requestAdditional");
   const canRequestCompletion = actions.includes("completion.request");
   const canApproveCompletion = actions.includes("completion.approve");
+  const canRequestDispute = actions.includes("dispute.request");
+  const canObjectDispute = actions.includes("dispute.object");
+
+  const disputeByInvoice = await loadLatestDisputesForInvoices(supabase, tx.invoices.map((i) => i.id));
+  const disputeLogs = new Map(
+    await Promise.all(
+      [...disputeByInvoice.values()].map(async (d) => [d.id, await loadLogs(supabase, d.id)] as const),
+    ),
+  );
 
   return (
     <div className="min-h-screen pb-10" style={{ background: C.yojo }}>
@@ -187,6 +198,17 @@ export default async function TransactionDetailPage({ params }: { params: Promis
                 <ConfirmReceiptButton txId={id} invoiceId={invoice.id} dueDate={invoice.dueDate} />
               )}
             </div>
+            {(canRequestDispute || canObjectDispute) && (
+              <DisputeCard
+                txId={id}
+                invoiceId={invoice.id}
+                dispute={disputeByInvoice.get(invoice.id) ?? null}
+                logs={disputeByInvoice.has(invoice.id) ? (disputeLogs.get(disputeByInvoice.get(invoice.id)!.id) ?? []) : []}
+                side={side}
+                canRequest={canRequestDispute}
+                canObject={canObjectDispute}
+              />
+            )}
           </div>
         ))}
         {canInvoice && (

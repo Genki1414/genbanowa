@@ -55,6 +55,17 @@ export default async function MembersPage() {
         <Link href="/partners" className="block text-[13px] font-bold underline" style={{ color: C.sumi }}>
           取引先（アプリ外）を管理する
         </Link>
+
+        {actor.isStaff && (
+          <>
+            <h2 className="text-[13px] font-extrabold mt-4 mb-2" style={{ color: C.sumi }}>
+              運営
+            </h2>
+            <Link href="/admin/disputes" className="block text-[13px] font-bold underline" style={{ color: C.sumi }}>
+              入金確認・異議申立を確認する
+            </Link>
+          </>
+        )}
       </main>
     </div>
   );

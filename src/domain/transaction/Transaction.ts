@@ -395,6 +395,8 @@ export class Transaction {
     push("receipt.confirm", side === "uke" && paidInvoice);
     push("completion.request", side === "uke" && this.props.status === "active");
     push("completion.approve", side === "moto" && this.props.status === "completion_requested");
+    push("dispute.request", side === "uke");
+    push("dispute.object", side === "moto");
 
     return actions;
   }

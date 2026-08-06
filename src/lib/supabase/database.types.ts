@@ -38,6 +38,7 @@ type UserRow = {
   name: string;
   role: "owner" | "admin" | "accounting" | "field" | "viewer";
   tel: string | null;
+  is_staff: boolean;
   created_at: string;
 };
 
@@ -116,6 +117,28 @@ type InvoiceRow = {
   rejected_at: string | null;
   reject_note: string | null;
   pdf_path: string | null;
+  created_at: string;
+};
+
+export type DisputeStatus = "overdue" | "confirming" | "date_proposed" | "objected" | "under_review" | "resolved" | "recorded";
+
+type PaymentDisputeRow = {
+  id: string;
+  invoice_id: string;
+  status: DisputeStatus;
+  proposed_date: string | null;
+  objection: string | null;
+  decided_by: string | null;
+  decided_at: string | null;
+  decision_note: string | null;
+  created_at: string;
+};
+
+type PaymentDisputeLogRow = {
+  id: string;
+  dispute_id: string;
+  actor: "uke" | "moto" | "admin" | "system";
+  text: string;
   created_at: string;
 };
 
@@ -328,6 +351,11 @@ export type Database = {
           due_date: string;
         }
       >;
+      payment_disputes: Table<PaymentDisputeRow, Partial<PaymentDisputeRow> & { invoice_id: string }>;
+      payment_dispute_logs: Table<
+        PaymentDisputeLogRow,
+        Partial<PaymentDisputeLogRow> & { dispute_id: string; actor: "uke" | "moto" | "admin" | "system"; text: string }
+      >;
       conversations: Table<
         ConversationRow,
         Partial<ConversationRow> & { kind: "job" | "direct"; company_a: string; company_b: string }
@@ -430,6 +458,10 @@ export type Database = {
       };
       unlock_feature: { Args: { p_company: string; p_key: string }; Returns: undefined };
       consume_invite_point: { Args: { p_scout_id: string }; Returns: undefined };
+      record_payment_delay: {
+        Args: { p_dispute_id: string; p_decision: string; p_note?: string | null; p_decided_by?: string | null };
+        Returns: undefined;
+      };
     };
   };
 };
