@@ -1,9 +1,11 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Building2, FileText, Handshake, CreditCard, AlertTriangle, ShieldCheck } from "lucide-react";
 import { C } from "@/styles/tokens";
 import { BackHeader } from "@/components/domain/BackHeader";
 import { DenpyoCard } from "@/components/ui/DenpyoCard";
 import { Chip } from "@/components/ui/Chip";
+import { MenuCard } from "@/components/ui/MenuCard";
+import { MenuRow } from "@/components/ui/MenuRow";
 import { InviteMemberForm } from "@/components/domain/InviteMemberForm";
 import { currentActor } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -24,7 +26,7 @@ export default async function MembersPage() {
 
   return (
     <div className="min-h-screen" style={{ background: C.yojo }}>
-      <BackHeader title="メンバー" />
+      <BackHeader title="設定" />
       <main className="max-w-md mx-auto p-3">
         <h2 className="text-[13px] font-extrabold mb-2" style={{ color: C.sumi }}>
           メンバー一覧
@@ -49,34 +51,22 @@ export default async function MembersPage() {
         <h2 className="text-[13px] font-extrabold mt-4 mb-2" style={{ color: C.sumi }}>
           自社ページ・アプリ外の書類
         </h2>
-        <Link href={`/companies/${actor.companyId}`} className="block text-[13px] font-bold underline mb-2" style={{ color: C.sumi }}>
-          自社ページを見る
-        </Link>
-        {can(actor.role, "company.edit") && (
-          <Link href="/me/company" className="block text-[13px] font-bold underline mb-2" style={{ color: C.sumi }}>
-            自社プロフィールを編集する
-          </Link>
-        )}
-        <Link href="/partners" className="block text-[13px] font-bold underline mb-2" style={{ color: C.sumi }}>
-          取引先（アプリ外）を管理する
-        </Link>
-        {can(actor.role, "plan.change") && (
-          <Link href="/me/plan" className="block text-[13px] font-bold underline" style={{ color: C.sumi }}>
-            プラン・請求を管理する
-          </Link>
-        )}
+        <MenuCard>
+          <MenuRow href={`/companies/${actor.companyId}`} icon={Building2} label="自社ページを見る" />
+          {can(actor.role, "company.edit") && <MenuRow href="/me/company" icon={FileText} label="自社プロフィールを編集する" />}
+          <MenuRow href="/partners" icon={Handshake} label="取引先（アプリ外）を管理する" />
+          {can(actor.role, "plan.change") && <MenuRow href="/me/plan" icon={CreditCard} label="プラン・請求を管理する" />}
+        </MenuCard>
 
         {actor.isStaff && (
           <>
             <h2 className="text-[13px] font-extrabold mt-4 mb-2" style={{ color: C.sumi }}>
               運営
             </h2>
-            <Link href="/admin/disputes" className="block text-[13px] font-bold underline mb-2" style={{ color: C.sumi }}>
-              入金確認・異議申立を確認する
-            </Link>
-            <Link href="/admin/trust-documents" className="block text-[13px] font-bold underline" style={{ color: C.sumi }}>
-              信用書類を確認する
-            </Link>
+            <MenuCard>
+              <MenuRow href="/admin/disputes" icon={AlertTriangle} label="入金確認・異議申立を確認する" tone="ki" />
+              <MenuRow href="/admin/trust-documents" icon={ShieldCheck} label="信用書類を確認する" tone="ki" />
+            </MenuCard>
           </>
         )}
       </main>

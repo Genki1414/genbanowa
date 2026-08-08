@@ -39,7 +39,7 @@ export async function BottomNav() {
     tabs.push({ key: "sites", label: "写真", href: "/sites", icon: "Camera" });
   }
   if (can(actor.role, "user.invite")) {
-    tabs.push({ key: "members", label: "メンバー", href: "/me/members", icon: "Users" });
+    tabs.push({ key: "members", label: "設定", href: "/me/members", icon: "Settings" });
   }
 
   return <BottomNavClient tabs={tabs} />;
