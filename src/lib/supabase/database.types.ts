@@ -23,12 +23,15 @@ type CompanyRow = {
   name: string;
   type: "corp" | "sole";
   plan: "free" | "std" | "pro" | "prem";
+  plan_since: string | null;
   stance: "uke" | "moto" | "both";
   unlocked_features: string[];
   trust_score: number;
   trust_level: string;
   invite_points: number;
   invoice_approval_limit: number;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
   created_at: string;
 };
 

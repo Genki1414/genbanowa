@@ -52,9 +52,14 @@ export default async function MembersPage() {
         <Link href={`/companies/${actor.companyId}`} className="block text-[13px] font-bold underline mb-2" style={{ color: C.sumi }}>
           自社ページを見る
         </Link>
-        <Link href="/partners" className="block text-[13px] font-bold underline" style={{ color: C.sumi }}>
+        <Link href="/partners" className="block text-[13px] font-bold underline mb-2" style={{ color: C.sumi }}>
           取引先（アプリ外）を管理する
         </Link>
+        {can(actor.role, "plan.change") && (
+          <Link href="/me/plan" className="block text-[13px] font-bold underline" style={{ color: C.sumi }}>
+            プラン・請求を管理する
+          </Link>
+        )}
 
         {actor.isStaff && (
           <>
