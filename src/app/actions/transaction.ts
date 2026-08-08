@@ -302,7 +302,7 @@ export async function submitInvoiceAction(
   if (!result.ok) return err(result.error);
 
   const newInvoice = result.value.invoices[result.value.invoices.length - 1];
-  const { error } = await insertInvoiceRow(supabase, txId, newInvoice);
+  const { data: invoiceRow, error } = await insertInvoiceRow(supabase, txId, newInvoice);
   if (error) return err(error.message);
 
   const ukeName = await companyName(supabase, tx.ukeCompanyId);
@@ -310,7 +310,7 @@ export async function submitInvoiceAction(
     companyId: tx.motoCompanyId,
     event: "INV_SUBMITTED",
     entityType: "invoice",
-    entityId: newInvoice.id,
+    entityId: invoiceRow.id,
     vars: { partner: ukeName, amount: yen(newInvoice.amount + newInvoice.tax), date: fmt(newInvoice.dueDate) },
     linkPath: `/transactions/${txId}`,
   });
