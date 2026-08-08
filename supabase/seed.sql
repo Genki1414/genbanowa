@@ -64,6 +64,49 @@ where c.name = d.name;
 
 update companies set trust_score = 35, trust_level = 'Bronze' where name = '高橋工業';
 
+-- 運営の承認待ち書類（/admin/trust-documents の動作確認用）。
+-- ファイル添付は未対応のため、kyoka/hokenは構造化データ、invoice/ccus/hpは文字列、
+-- tohon/kaigyo/baishoは申告内容なし（電話等での確認が必要なケース）で投入する。
+insert into trust_documents (company_id, kind, status, values)
+select id, 'kyoka', 'pending',
+  '{"license_no":"東京都知事 般-2 第00456号","license_types":["塗装","内装"],"license_expiry":"2029-03-31"}'::jsonb
+from companies where name = '北千住リフォーム';
+
+insert into trust_documents (company_id, kind, status, values)
+select id, 'hoken', 'pending', '{"kenpo":true,"kounen":true,"koyou":false,"rousai_uwanose":false}'::jsonb
+from companies where name = '北千住リフォーム';
+
+insert into trust_documents (company_id, kind, status, values)
+select id, 'kyoka', 'pending',
+  '{"license_no":"千葉県知事 般-5 第01122号","license_types":["内装"],"license_expiry":"2028-11-30"}'::jsonb
+from companies where name = '東和内装';
+
+insert into trust_documents (company_id, kind, status, value)
+select id, 'invoice', 'pending', 'T2233445566778'
+from companies where name = '東和内装';
+
+insert into trust_documents (company_id, kind, status)
+select id, 'tohon', 'pending' from companies where name = '城東解体工業';
+
+insert into trust_documents (company_id, kind, status, value)
+select id, 'ccus', 'pending', 'CCUS0004521'
+from companies where name = '城東解体工業';
+
+insert into trust_documents (company_id, kind, status)
+select id, 'baisho', 'pending' from companies where name = '湾岸工業';
+
+insert into trust_documents (company_id, kind, status, value)
+select id, 'hp', 'pending', 'https://sanwakasetsu.example.com'
+from companies where name = '三和架設';
+
+insert into trust_documents (company_id, kind, status)
+select id, 'tohon', 'pending' from companies where name = '高橋工業';
+
+-- 却下済みの例（再提出フローの動作確認用）
+insert into trust_documents (company_id, kind, status, value, reject_note)
+select id, 'invoice', 'rejected', 'T99999', 'インボイス登録番号の形式が正しくありません（Tから始まる13桁を入力してください）'
+from companies where name = '丸和塗装';
+
 -- 動作確認シナリオ（docs/11_シードデータ.md）は請求書の新規発行を含むため、
 -- 取引3の受注側である丸和塗装も無料プラン（docs=false）のままでは検証できない。
 update companies set plan = 'std' where name = '丸和塗装';

@@ -45,6 +45,7 @@ export async function approveTrustDocumentAction(docId: string): Promise<Result<
 export async function rejectTrustDocumentAction(docId: string, note: string | undefined): Promise<Result<null>> {
   const actor = await requireActor();
   if (!actor.isStaff) return err("PERMISSION_DENIED");
+  if (!note?.trim()) return err("却下理由を入力してください");
 
   const admin = createAdminClient();
   const { error } = await rejectTrustDocument(admin, docId, actor.userId, note);

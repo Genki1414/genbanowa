@@ -29,15 +29,20 @@ export function DecideTrustDocumentForm({ docId }: { docId: string }) {
 
   return (
     <div>
-      <Field label="却下理由（本人に通知されます）" value={note} onChange={setNote} placeholder="却下する場合は入力してください" />
+      <Field label="却下理由（本人に通知されます）" value={note} onChange={setNote} placeholder="例）許可番号の形式が正しくありません" />
       <div className="flex gap-2">
         <Btn tone="midori" onClick={() => setConfirmDecision("approve")}>
           承認する
         </Btn>
-        <Btn tone="aka" onClick={() => setConfirmDecision("reject")}>
+        <Btn tone="aka" onClick={() => setConfirmDecision("reject")} disabled={!note.trim()}>
           却下する
         </Btn>
       </div>
+      {!note.trim() && (
+        <p className="text-[11px] mt-1" style={{ color: C.usu }}>
+          却下するには理由の入力が必要です。
+        </p>
+      )}
       {error && (
         <p className="text-[12px] mt-2" style={{ color: C.aka }}>
           {error}

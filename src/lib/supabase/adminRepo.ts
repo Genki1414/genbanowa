@@ -167,12 +167,14 @@ export interface AdminTrustDocumentListItem {
   companyId: string;
   companyName: string;
   createdAt: string;
+  value: string | null;
+  values: Record<string, unknown> | null;
 }
 
 export async function loadPendingTrustDocuments(admin: AdminClient): Promise<AdminTrustDocumentListItem[]> {
   const { data: docs } = await admin
     .from("trust_documents")
-    .select("id, kind, company_id, created_at")
+    .select("id, kind, company_id, created_at, value, values")
     .eq("status", "pending")
     .order("created_at", { ascending: true });
   if (!docs || docs.length === 0) return [];
@@ -194,34 +196,38 @@ export async function loadPendingTrustDocuments(admin: AdminClient): Promise<Adm
       companyId: d.company_id,
       companyName: nameById.get(d.company_id) ?? "—",
       createdAt: d.created_at,
+      value: d.value,
+      values: (d.values as Record<string, unknown> | null) ?? null,
     };
   });
 }
 
 export interface AdminTrustDocumentDetail extends AdminTrustDocumentListItem {
   status: "pending" | "approved" | "rejected";
-  value: string | null;
-  values: Record<string, unknown> | null;
+  approvedLabels: string[];
 }
 
 export async function loadTrustDocumentDetail(admin: AdminClient, docId: string): Promise<AdminTrustDocumentDetail | null> {
   const { data: doc } = await admin.from("trust_documents").select("*").eq("id", docId).maybeSingle();
   if (!doc) return null;
-  const [{ data: point }, { data: company }] = await Promise.all([
-    admin.from("trust_doc_points").select("*").eq("kind", doc.kind).maybeSingle(),
+  const [{ data: points }, { data: company }, { data: approved }] = await Promise.all([
+    admin.from("trust_doc_points").select("*"),
     admin.from("companies").select("id, name").eq("id", doc.company_id).maybeSingle(),
+    admin.from("trust_documents").select("kind").eq("company_id", doc.company_id).eq("status", "approved"),
   ]);
+  const pointByKind = new Map((points ?? []).map((p) => [p.kind, p]));
   return {
     id: doc.id,
     kind: doc.kind,
-    label: point?.label ?? doc.kind,
-    points: point?.points ?? 0,
+    label: pointByKind.get(doc.kind)?.label ?? doc.kind,
+    points: pointByKind.get(doc.kind)?.points ?? 0,
     companyId: doc.company_id,
     companyName: company?.name ?? "—",
     createdAt: doc.created_at,
-    status: doc.status,
     value: doc.value,
     values: (doc.values as Record<string, unknown> | null) ?? null,
+    status: doc.status,
+    approvedLabels: (approved ?? []).map((d) => pointByKind.get(d.kind)?.label ?? d.kind),
   };
 }
 

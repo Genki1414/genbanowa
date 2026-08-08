@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { C } from "@/styles/tokens";
 import { BackHeader } from "@/components/domain/BackHeader";
@@ -29,16 +30,25 @@ export default async function AdminTrustDocumentDetailPage({ params }: { params:
   const doc = await loadTrustDocumentDetail(admin, id);
   if (!doc) notFound();
 
+  const hasEvidence = doc.kind === "kyoka" || doc.kind === "hoken" || !!doc.value;
+
   return (
     <div className="min-h-screen" style={{ background: C.yojo }}>
-      <BackHeader title="信用書類の確認" />
+      <BackHeader
+        title="信用書類の確認"
+        right={
+          <Link href={`/companies/${doc.companyId}`} className="text-[12px] font-bold underline" style={{ color: C.sumi }}>
+            会社ページを見る
+          </Link>
+        }
+      />
       <main className="max-w-md mx-auto p-3">
         <DenpyoCard tone="plain">
           <div className="flex items-center gap-2 mb-2">
             <Chip solid color={doc.status === "approved" ? C.midori : doc.status === "rejected" ? C.aka : C.ki}>
               {STATUS_LABEL[doc.status]}
             </Chip>
-            <Chip color={C.usu}>+{doc.points}</Chip>
+            <Chip color={C.usu}>+{doc.points}点</Chip>
           </div>
           <Row label="会社" value={doc.companyName} />
           <Row label="書類" value={doc.label} />
@@ -58,8 +68,37 @@ export default async function AdminTrustDocumentDetailPage({ params }: { params:
               ))}
             </div>
           )}
-          {(doc.kind === "invoice" || doc.kind === "ccus" || doc.kind === "hp") && <Row label="内容" value={doc.value ?? "—"} />}
+          {doc.kind === "hp" && doc.value && (
+            <a href={doc.value} target="_blank" rel="noreferrer" className="block text-[13px] font-bold underline mt-1" style={{ color: C.sumi }}>
+              {doc.value}
+            </a>
+          )}
+          {(doc.kind === "invoice" || doc.kind === "ccus") && <Row label="内容" value={doc.value ?? "—"} mono />}
         </DenpyoCard>
+
+        {!hasEvidence && (
+          <div className="mt-3 p-2.5 rounded-sm" style={{ background: C.yojo, border: `1px solid ${C.aka}` }}>
+            <p className="text-[12px]" style={{ color: C.aka }}>
+              {doc.label}はファイル添付が未対応のため、申告内容の記録以外に確認できる情報がありません。
+              電話等アプリ外での確認が必要な場合は、確認が取れるまで判断を保留してください。
+            </p>
+          </div>
+        )}
+
+        {doc.approvedLabels.length > 0 && (
+          <div className="mt-3">
+            <h2 className="text-[12px] font-extrabold mb-1" style={{ color: C.usu }}>
+              この会社の承認済み書類
+            </h2>
+            <div className="flex flex-wrap gap-1">
+              {doc.approvedLabels.map((l) => (
+                <Chip key={l} color={C.midori}>
+                  {l}
+                </Chip>
+              ))}
+            </div>
+          </div>
+        )}
 
         {doc.status === "pending" ? (
           <div className="mt-4">
