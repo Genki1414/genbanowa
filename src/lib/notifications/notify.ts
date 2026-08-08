@@ -24,7 +24,7 @@ export async function notify(params: {
 }): Promise<void> {
   const { severity, title, body } = renderNotification(params.event, params.vars);
   const admin = createAdminClient();
-  await admin.from("notifications").insert({
+  const { error } = await admin.from("notifications").insert({
     company_id: params.companyId,
     user_id: params.userId ?? null,
     event: params.event,
@@ -35,6 +35,11 @@ export async function notify(params: {
     body,
     link: params.linkPath,
   });
+  // 通知の失敗で本体の操作（注文書送信など）まで失敗させたくないので投げないが、
+  // 黙って消えると気づけないのでログにだけは残す。
+  if (error) {
+    console.error(`[notify] failed to insert notification (event=${params.event}, company=${params.companyId}):`, error.message);
+  }
 }
 
 /** 取引の両当事者に同じイベントを通知する（異議申立の運営引き上げ・確定判断など）。 */
