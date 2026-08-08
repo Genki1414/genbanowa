@@ -20,7 +20,7 @@ export default async function CompanyEditPage() {
     <div className="min-h-screen" style={{ background: C.yojo }}>
       <BackHeader title="自社プロフィールを編集" />
       <main className="max-w-md mx-auto p-3">
-        <CompanyProfileForm profile={profile} canEditApprovalLimit={actor.role === "owner" || actor.role === "admin"} />
+        <CompanyProfileForm profile={profile} companyId={actor.companyId} canEditApprovalLimit={actor.role === "owner" || actor.role === "admin"} />
       </main>
     </div>
   );

@@ -33,7 +33,12 @@ export interface CompanyPayment {
   delayCount: number;
 }
 
-/** 自社プロフィールの編集画面用。0016_billing.sqlで列権限を絞った編集可能な列だけを持つ。 */
+/**
+ * 自社プロフィールの編集画面用。0016_billing.sqlで列権限を絞った編集可能な列だけを持つ。
+ * 許可番号・許可業種・許可有効期限・保険加入状況・インボイス登録番号・CCUS事業者IDは
+ * 信用スコアの根拠となる情報のため自己申告では編集させず、書類提出（trust_documents、
+ * 運営の確認をもって反映）でのみ更新できる（0018_company_verified_fields_locked.sql）。
+ */
 export interface CompanyEditableProfile {
   name: string;
   kana?: string;
@@ -45,12 +50,6 @@ export interface CompanyEditableProfile {
   url?: string;
   industries: string[];
   serviceAreas: string[];
-  licenseNo?: string;
-  licenseTypes: string[];
-  licenseExpiry?: string;
-  insurance: { kenpo: boolean; kounen: boolean; koyou: boolean; rousaiUwanose: boolean };
-  invoiceNo?: string;
-  ccusId?: string;
   stance: "uke" | "moto" | "both";
   invoiceApprovalLimit: number;
 }

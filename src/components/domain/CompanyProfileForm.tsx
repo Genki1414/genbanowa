@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { C } from "@/styles/tokens";
 import { Field } from "@/components/ui/Field";
 import { Pills } from "@/components/ui/Pills";
@@ -20,12 +21,19 @@ const fromCsv = (text: string) =>
     .map((s) => s.trim())
     .filter(Boolean);
 
-export function CompanyProfileForm({ profile, canEditApprovalLimit }: { profile: CompanyEditableProfile; canEditApprovalLimit: boolean }) {
+export function CompanyProfileForm({
+  profile,
+  companyId,
+  canEditApprovalLimit,
+}: {
+  profile: CompanyEditableProfile;
+  companyId: string;
+  canEditApprovalLimit: boolean;
+}) {
   const router = useRouter();
   const [form, setForm] = useState(profile);
   const [industriesText, setIndustriesText] = useState(toCsv(profile.industries));
   const [serviceAreasText, setServiceAreasText] = useState(toCsv(profile.serviceAreas));
-  const [licenseTypesText, setLicenseTypesText] = useState(toCsv(profile.licenseTypes));
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [pending, startTransition] = useTransition();
@@ -39,7 +47,6 @@ export function CompanyProfileForm({ profile, canEditApprovalLimit }: { profile:
       ...form,
       industries: fromCsv(industriesText),
       serviceAreas: fromCsv(serviceAreasText),
-      licenseTypes: fromCsv(licenseTypesText),
     };
     startTransition(async () => {
       const r = await updateCompanyProfileAction(payload);
@@ -76,33 +83,15 @@ export function CompanyProfileForm({ profile, canEditApprovalLimit }: { profile:
       <Field label="ホームページ・SNS" value={form.url ?? ""} onChange={(v) => set("url", v)} placeholder="https://..." />
       <Field label="対応職種（読点区切り）" value={industriesText} onChange={setIndustriesText} placeholder="足場、解体" />
       <Field label="対応エリア（読点区切り）" value={serviceAreasText} onChange={setServiceAreasText} placeholder="千葉県、東京都" />
-      <Field label="建設業許可番号" value={form.licenseNo ?? ""} onChange={(v) => set("licenseNo", v)} />
-      <Field label="許可業種（読点区切り）" value={licenseTypesText} onChange={setLicenseTypesText} placeholder="とび・土工、解体" />
-      <Field label="許可の有効期限" type="date" value={form.licenseExpiry ?? ""} onChange={(v) => set("licenseExpiry", v)} />
 
-      <div className="mb-3">
-        <span className="block text-[11px] font-bold mb-1" style={{ color: C.usu }}>
-          社会保険等の加入状況
-        </span>
-        <div className="flex flex-wrap gap-3">
-          {(
-            [
-              ["kenpo", "健康保険"],
-              ["kounen", "厚生年金"],
-              ["koyou", "雇用保険"],
-              ["rousaiUwanose", "労災上乗せ保険"],
-            ] as const
-          ).map(([key, label]) => (
-            <label key={key} className="flex items-center gap-1.5 text-[13px]" style={{ color: C.sumi }}>
-              <input type="checkbox" checked={form.insurance[key]} onChange={(e) => set("insurance", { ...form.insurance, [key]: e.target.checked })} />
-              {label}
-            </label>
-          ))}
-        </div>
+      <div className="mb-3 p-2.5 rounded-sm" style={{ background: C.yojo }}>
+        <p className="text-[12px]" style={{ color: C.usu }}>
+          建設業許可・社会保険等の加入状況・インボイス登録番号・CCUS事業者IDは、なりすまし防止のため書類提出による申請制です。
+          <Link href={`/companies/${companyId}`} className="font-bold underline" style={{ color: C.sumi }}>
+            自社ページから提出する
+          </Link>
+        </p>
       </div>
-
-      <Field label="インボイス登録番号" value={form.invoiceNo ?? ""} onChange={(v) => set("invoiceNo", v)} />
-      <Field label="CCUS事業者ID" value={form.ccusId ?? ""} onChange={(v) => set("ccusId", v)} />
 
       {canEditApprovalLimit && (
         <label className="block mb-3">
