@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { currentActor } from "@/lib/auth";
 import { BottomNav } from "@/components/domain/BottomNav";
+import { AppChrome } from "@/components/domain/AppChrome";
 import { DevAccountSwitcher } from "@/components/domain/DevAccountSwitcher";
 import "./globals.css";
 
@@ -33,8 +34,9 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <div className={actor ? "flex-1 pb-14" : "flex-1"}>{children}</div>
-        {actor && <BottomNav />}
+        <AppChrome hasActor={!!actor} bottomNav={actor ? <BottomNav /> : null}>
+          {children}
+        </AppChrome>
         {process.env.NODE_ENV !== "production" && <DevAccountSwitcher />}
       </body>
     </html>

@@ -4,6 +4,7 @@ import { C } from "@/styles/tokens";
 import { Header } from "@/components/ui/Header";
 import { DenpyoCard } from "@/components/ui/DenpyoCard";
 import { Chip } from "@/components/ui/Chip";
+import { AdminSubNav } from "@/components/domain/AdminSubNav";
 import { currentActor } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { loadPendingTrustDocuments, AdminTrustDocumentListItem } from "@/lib/supabase/adminRepo";
@@ -35,6 +36,7 @@ export default async function AdminTrustDocumentsPage() {
   return (
     <div className="min-h-screen" style={{ background: C.yojo }}>
       <Header title="運営：信用書類の確認" />
+      <AdminSubNav />
       <main className="max-w-md mx-auto p-3">
         <h2 className="text-[13px] font-extrabold mb-2" style={{ color: C.sumi }}>
           確認待ち（{docs.length}件）

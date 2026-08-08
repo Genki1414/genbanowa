@@ -4,6 +4,7 @@ import { C } from "@/styles/tokens";
 import { Header } from "@/components/ui/Header";
 import { DenpyoCard } from "@/components/ui/DenpyoCard";
 import { Chip } from "@/components/ui/Chip";
+import { AdminSubNav } from "@/components/domain/AdminSubNav";
 import { currentActor } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { loadDisputesByStatus, AdminDisputeListItem } from "@/lib/supabase/adminRepo";
@@ -47,6 +48,7 @@ export default async function AdminDisputesPage() {
   return (
     <div className="min-h-screen" style={{ background: C.yojo }}>
       <Header title="運営：入金確認・異議申立" />
+      <AdminSubNav />
       <main className="max-w-md mx-auto p-3">
         <h2 className="text-[13px] font-extrabold mb-2" style={{ color: C.sumi }}>
           事実確認が必要（{underReview.length}件）
