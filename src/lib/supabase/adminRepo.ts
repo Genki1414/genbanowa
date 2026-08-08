@@ -1,7 +1,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import { Database } from "./database.types";
+import { Database, TrustDocKind } from "./database.types";
 import { DisputeStatus } from "@/domain/transaction/Dispute";
-import { notifyBoth } from "@/lib/notifications/notify";
+import { notify, notifyBoth } from "@/lib/notifications/notify";
 
 export type AdminClient = SupabaseClient<Database>;
 
@@ -155,6 +155,134 @@ export async function decideDispute(
       }
     }
   }
+
+  return { error: null };
+}
+
+export interface AdminTrustDocumentListItem {
+  id: string;
+  kind: TrustDocKind;
+  label: string;
+  points: number;
+  companyId: string;
+  companyName: string;
+  createdAt: string;
+}
+
+export async function loadPendingTrustDocuments(admin: AdminClient): Promise<AdminTrustDocumentListItem[]> {
+  const { data: docs } = await admin
+    .from("trust_documents")
+    .select("id, kind, company_id, created_at")
+    .eq("status", "pending")
+    .order("created_at", { ascending: true });
+  if (!docs || docs.length === 0) return [];
+
+  const [{ data: points }, { data: companies }] = await Promise.all([
+    admin.from("trust_doc_points").select("*"),
+    admin.from("companies").select("id, name").in("id", [...new Set(docs.map((d) => d.company_id))]),
+  ]);
+  const pointByKind = new Map((points ?? []).map((p) => [p.kind, p]));
+  const nameById = new Map((companies ?? []).map((c) => [c.id, c.name]));
+
+  return docs.map((d) => {
+    const p = pointByKind.get(d.kind);
+    return {
+      id: d.id,
+      kind: d.kind,
+      label: p?.label ?? d.kind,
+      points: p?.points ?? 0,
+      companyId: d.company_id,
+      companyName: nameById.get(d.company_id) ?? "—",
+      createdAt: d.created_at,
+    };
+  });
+}
+
+export interface AdminTrustDocumentDetail extends AdminTrustDocumentListItem {
+  status: "pending" | "approved" | "rejected";
+  value: string | null;
+  values: Record<string, unknown> | null;
+}
+
+export async function loadTrustDocumentDetail(admin: AdminClient, docId: string): Promise<AdminTrustDocumentDetail | null> {
+  const { data: doc } = await admin.from("trust_documents").select("*").eq("id", docId).maybeSingle();
+  if (!doc) return null;
+  const [{ data: point }, { data: company }] = await Promise.all([
+    admin.from("trust_doc_points").select("*").eq("kind", doc.kind).maybeSingle(),
+    admin.from("companies").select("id, name").eq("id", doc.company_id).maybeSingle(),
+  ]);
+  return {
+    id: doc.id,
+    kind: doc.kind,
+    label: point?.label ?? doc.kind,
+    points: point?.points ?? 0,
+    companyId: doc.company_id,
+    companyName: company?.name ?? "—",
+    createdAt: doc.created_at,
+    status: doc.status,
+    value: doc.value,
+    values: (doc.values as Record<string, unknown> | null) ?? null,
+  };
+}
+
+/**
+ * 承認。companiesへの反映と信用スコア再計算はDB側のapprove_trust_document()（0019）が行う。
+ * ここでは承認前後のtrust_levelを見て、TRT_APPROVEDと（レベルが上がった場合のみ）TRT_LEVEL_UPを通知する。
+ */
+export async function approveTrustDocument(admin: AdminClient, docId: string, reviewedBy: string) {
+  const { data: doc } = await admin.from("trust_documents").select("kind, company_id").eq("id", docId).maybeSingle();
+  if (!doc) return { error: { message: "書類が見つかりません" } };
+
+  const [{ data: point }, { data: before }] = await Promise.all([
+    admin.from("trust_doc_points").select("label").eq("kind", doc.kind).maybeSingle(),
+    admin.from("companies").select("trust_level").eq("id", doc.company_id).maybeSingle(),
+  ]);
+
+  const { error } = await admin.rpc("approve_trust_document", { p_doc_id: docId, p_reviewed_by: reviewedBy });
+  if (error) return { error };
+
+  const { data: after } = await admin.from("companies").select("trust_score, trust_level").eq("id", doc.company_id).maybeSingle();
+
+  await notify({
+    companyId: doc.company_id,
+    event: "TRT_APPROVED",
+    entityType: "trust_document",
+    entityId: docId,
+    vars: { docLabel: point?.label ?? doc.kind, score: String(after?.trust_score ?? "") },
+    linkPath: `/companies/${doc.company_id}`,
+  });
+
+  if (after && before && after.trust_level !== before.trust_level) {
+    await notify({
+      companyId: doc.company_id,
+      event: "TRT_LEVEL_UP",
+      entityType: "trust_document",
+      entityId: docId,
+      vars: { level: after.trust_level },
+      linkPath: `/companies/${doc.company_id}`,
+    });
+  }
+
+  return { error: null };
+}
+
+export async function rejectTrustDocument(admin: AdminClient, docId: string, reviewedBy: string, note: string | undefined) {
+  const { data: doc } = await admin.from("trust_documents").select("kind, company_id").eq("id", docId).maybeSingle();
+  if (!doc) return { error: { message: "書類が見つかりません" } };
+
+  const { data: point } = await admin.from("trust_doc_points").select("label").eq("kind", doc.kind).maybeSingle();
+
+  const { error } = await admin.rpc("reject_trust_document", { p_doc_id: docId, p_reviewed_by: reviewedBy, p_note: note ?? null });
+  if (error) return { error };
+
+  await notify({
+    companyId: doc.company_id,
+    event: "TRT_REJECTED",
+    entityType: "trust_document",
+    entityId: docId,
+    vars: { docLabel: point?.label ?? doc.kind, reason: note ?? "特になし" },
+    linkPath: `/companies/${doc.company_id}`,
+  });
 
   return { error: null };
 }

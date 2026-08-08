@@ -64,6 +64,7 @@ export type TrustDocStatus = "not_submitted" | "pending" | "approved" | "rejecte
 
 export interface TrustDocChecklistItem extends TrustDocPoint {
   status: TrustDocStatus;
+  rejectNote?: string;
 }
 
 /**

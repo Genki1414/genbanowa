@@ -236,9 +236,12 @@ type TrustDocumentRow = {
   kind: TrustDocKind;
   file_path: string | null;
   value: string | null;
+  values: Json | null;
   status: "pending" | "approved" | "rejected";
   reviewed_by: string | null;
   reviewed_at: string | null;
+  reject_note: string | null;
+  created_at: string;
 };
 
 type TrustDocPointRow = {
@@ -509,6 +512,18 @@ export type Database = {
       consume_invite_point: { Args: { p_scout_id: string }; Returns: undefined };
       record_payment_delay: {
         Args: { p_dispute_id: string; p_decision: string; p_note?: string | null; p_decided_by?: string | null };
+        Returns: undefined;
+      };
+      submit_trust_document: {
+        Args: { p_kind: string; p_value: string | null; p_values: Json | null };
+        Returns: undefined;
+      };
+      approve_trust_document: {
+        Args: { p_doc_id: string; p_reviewed_by: string };
+        Returns: undefined;
+      };
+      reject_trust_document: {
+        Args: { p_doc_id: string; p_reviewed_by: string; p_note: string | null };
         Returns: undefined;
       };
     };

@@ -71,8 +71,11 @@ export default async function MembersPage() {
             <h2 className="text-[13px] font-extrabold mt-4 mb-2" style={{ color: C.sumi }}>
               運営
             </h2>
-            <Link href="/admin/disputes" className="block text-[13px] font-bold underline" style={{ color: C.sumi }}>
+            <Link href="/admin/disputes" className="block text-[13px] font-bold underline mb-2" style={{ color: C.sumi }}>
               入金確認・異議申立を確認する
+            </Link>
+            <Link href="/admin/trust-documents" className="block text-[13px] font-bold underline" style={{ color: C.sumi }}>
+              信用書類を確認する
             </Link>
           </>
         )}

@@ -25,7 +25,10 @@ export type NotificationEvent =
   | "DSP_RESOLVED"
   | "DSP_RECORDED"
   | "CMP_REQUESTED"
-  | "CMP_APPROVED";
+  | "CMP_APPROVED"
+  | "TRT_APPROVED"
+  | "TRT_REJECTED"
+  | "TRT_LEVEL_UP";
 
 export interface Notification {
   id: string;
@@ -150,6 +153,21 @@ export const NOTIFICATION_META: Record<NotificationEvent, NotificationMeta> = {
     severity: "A",
     title: () => "取引が完了しました",
     body: () => "取引が完了しました。お疲れさまでした",
+  },
+  TRT_APPROVED: {
+    severity: "B",
+    title: () => "提出書類が承認されました",
+    body: (v) => `${v.docLabel}が承認されました。信用スコアが${v.score}点になりました`,
+  },
+  TRT_REJECTED: {
+    severity: "B",
+    title: () => "提出書類が確認できませんでした",
+    body: (v) => `${v.docLabel}が確認できませんでした。理由：${v.reason}`,
+  },
+  TRT_LEVEL_UP: {
+    severity: "B",
+    title: () => "信用レベルが上がりました",
+    body: (v) => `信用レベルが${v.level}になりました。スカウトが届きやすくなります`,
   },
 };
 

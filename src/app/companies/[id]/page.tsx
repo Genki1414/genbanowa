@@ -101,7 +101,7 @@ export default async function CompanyProfilePage({ params }: { params: Promise<{
           )}
           {isOwnCompany
             ? checklist!.map((d) => (
-                <div key={d.kind} className="flex items-center gap-2 py-[6px]" style={{ borderBottom: `1px dashed ${C.keisen}` }}>
+                <div key={d.kind} className="flex items-center flex-wrap gap-2 py-[6px]" style={{ borderBottom: `1px dashed ${C.keisen}` }}>
                   {d.status === "approved" ? (
                     <Check size={15} style={{ color: C.midori, flexShrink: 0 }} />
                   ) : (
@@ -115,7 +115,9 @@ export default async function CompanyProfilePage({ params }: { params: Promise<{
                   <span className="text-[11px] font-bold" style={{ color: d.status === "approved" ? C.midori : C.keisen }}>
                     +{d.points}
                   </span>
-                  {d.status === "not_submitted" && <SubmitTrustDocumentForm kind={d.kind as TrustDocKind} label={d.label} />}
+                  {(d.status === "not_submitted" || d.status === "rejected") && (
+                    <SubmitTrustDocumentForm kind={d.kind as TrustDocKind} label={d.label} rejectNote={d.rejectNote} />
+                  )}
                 </div>
               ))
             : profile.approvedDocKinds.map((kind) => (

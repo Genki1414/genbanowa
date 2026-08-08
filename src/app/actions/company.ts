@@ -9,12 +9,16 @@ import { insertTrustDocument, loadOwnCompanyProfile, updateCompanyProfile } from
 import { CompanyEditableProfile } from "@/domain/company/Company";
 import { TrustDocKind } from "@/lib/supabase/database.types";
 
-export async function submitTrustDocumentAction(kind: TrustDocKind, value: string | undefined): Promise<Result<null>> {
+export async function submitTrustDocumentAction(
+  kind: TrustDocKind,
+  value: string | undefined,
+  values?: Record<string, unknown>,
+): Promise<Result<null>> {
   const actor = await requireActor();
   if (!can(actor.role, "trustDocument.submit")) return err("PERMISSION_DENIED");
 
   const supabase = await createClient();
-  const { error } = await insertTrustDocument(supabase, actor.companyId, kind, value);
+  const { error } = await insertTrustDocument(supabase, kind, value, values);
   if (error) return err(error.message);
 
   revalidatePath(`/companies/${actor.companyId}`);

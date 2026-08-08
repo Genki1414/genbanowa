@@ -1,5 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import { Database, TrustDocKind } from "./database.types";
+import { Database, Json, TrustDocKind } from "./database.types";
 import {
   CompanyProfile,
   CompanyStats,
@@ -97,21 +97,23 @@ export async function loadCompanyPayment(supabase: Client, id: string): Promise<
 export async function loadTrustDocChecklist(supabase: Client, companyId: string): Promise<TrustDocChecklistItem[]> {
   const [{ data: points }, { data: docs }] = await Promise.all([
     supabase.from("trust_doc_points").select("*").order("points", { ascending: false }),
-    supabase.from("trust_documents").select("kind, status").eq("company_id", companyId),
+    supabase.from("trust_documents").select("kind, status, reject_note").eq("company_id", companyId),
   ]);
-  const statusByKind = new Map((docs ?? []).map((d) => [d.kind, d.status]));
+  const docByKind = new Map((docs ?? []).map((d) => [d.kind, d]));
   return (points ?? []).map((p) => ({
     kind: p.kind,
     label: p.label,
     points: p.points,
-    status: statusByKind.get(p.kind) ?? "not_submitted",
+    status: docByKind.get(p.kind)?.status ?? "not_submitted",
+    rejectNote: docByKind.get(p.kind)?.reject_note ?? undefined,
   }));
 }
 
-export async function insertTrustDocument(supabase: Client, companyId: string, kind: TrustDocKind, value?: string) {
-  return supabase.from("trust_documents").insert({
-    company_id: companyId,
-    kind,
-    value: value ?? null,
-  });
+/**
+ * 書類の提出・再提出。company_id は my_company() で内部的に決まる（submit_trust_document、
+ * 0019_trust_document_review.sql）。却下（rejected）状態のときだけ再提出扱いで上書きされ、
+ * pending/approved のときは何もしない（送信後に変更できない原則）。
+ */
+export async function insertTrustDocument(supabase: Client, kind: TrustDocKind, value?: string, values?: Record<string, unknown>) {
+  return supabase.rpc("submit_trust_document", { p_kind: kind, p_value: value ?? null, p_values: (values as Json) ?? null });
 }
