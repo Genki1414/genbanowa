@@ -21,6 +21,7 @@ import {
 } from "@/lib/supabase/companyRepo";
 import { getCompanyPlan } from "@/lib/supabase/plan";
 import { canSeeStats, canSeeRating, canSeePayment } from "@/domain/company/Company";
+import { can } from "@/domain/auth/Permission";
 import { PLANS } from "@/domain/plan/Plan";
 import { TrustDocKind } from "@/lib/supabase/database.types";
 
@@ -47,7 +48,16 @@ export default async function CompanyProfilePage({ params }: { params: Promise<{
 
   return (
     <div className="min-h-screen" style={{ background: C.yojo }}>
-      <BackHeader title={profile.name} />
+      <BackHeader
+        title={profile.name}
+        right={
+          isOwnCompany && can(actor.role, "company.edit") ? (
+            <Link href="/me/company" className="text-[12px] font-bold" style={{ color: C.ki }}>
+              編集する
+            </Link>
+          ) : undefined
+        }
+      />
       <main className="max-w-md mx-auto p-3">
         <DenpyoCard tone="ki">
           <div className="flex items-center gap-1.5 mb-2 flex-wrap">

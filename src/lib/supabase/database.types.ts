@@ -18,10 +18,27 @@ type Table<Row, Insert, Update = Partial<Insert>> = {
   Relationships: [];
 };
 
+type CompanyInsurance = { kenpo?: boolean; kounen?: boolean; koyou?: boolean; rousai_uwanose?: boolean };
+
 type CompanyRow = {
   id: string;
   name: string;
+  kana: string | null;
   type: "corp" | "sole";
+  rep_name: string | null;
+  established: string | null;
+  postal: string | null;
+  address: string | null;
+  tel: string | null;
+  url: string | null;
+  industries: string[];
+  service_areas: string[];
+  license_no: string | null;
+  license_types: string[] | null;
+  license_expiry: string | null;
+  insurance: CompanyInsurance;
+  invoice_no: string | null;
+  ccus_id: string | null;
   plan: "free" | "std" | "pro" | "prem";
   plan_since: string | null;
   stance: "uke" | "moto" | "both";

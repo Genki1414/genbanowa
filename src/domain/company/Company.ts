@@ -33,6 +33,28 @@ export interface CompanyPayment {
   delayCount: number;
 }
 
+/** 自社プロフィールの編集画面用。0016_billing.sqlで列権限を絞った編集可能な列だけを持つ。 */
+export interface CompanyEditableProfile {
+  name: string;
+  kana?: string;
+  repName?: string;
+  established?: string;
+  postal?: string;
+  address?: string;
+  tel?: string;
+  url?: string;
+  industries: string[];
+  serviceAreas: string[];
+  licenseNo?: string;
+  licenseTypes: string[];
+  licenseExpiry?: string;
+  insurance: { kenpo: boolean; kounen: boolean; koyou: boolean; rousaiUwanose: boolean };
+  invoiceNo?: string;
+  ccusId?: string;
+  stance: "uke" | "moto" | "both";
+  invoiceApprovalLimit: number;
+}
+
 export interface TrustDocPoint {
   kind: string;
   label: string;
