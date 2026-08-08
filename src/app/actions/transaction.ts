@@ -303,7 +303,12 @@ export async function submitInvoiceAction(
 
   const newInvoice = result.value.invoices[result.value.invoices.length - 1];
   const { data: invoiceRow, error } = await insertInvoiceRow(supabase, txId, newInvoice);
-  if (error) return err(error.message);
+  if (error) {
+    if (error.code === "23505" && error.message.includes("invoices_order_id_target_month_idx")) {
+      return err("この注文書・対象月への人工精算請求はすでに提出済みです。対象月を変えるか、他の請求根拠を選んでください。");
+    }
+    return err(error.message);
+  }
 
   const ukeName = await companyName(supabase, tx.ukeCompanyId);
   await notify({
