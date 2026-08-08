@@ -15,6 +15,7 @@ import { inviteMemberAction } from "@/app/actions/members";
  * （段階開放と同じ思想。08_リファクタ分割設計.md、依頼者からのフィードバック）。
  */
 export function InviteMemberForm() {
+  const [open, setOpen] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const roles = showAdvanced ? [...BASIC_INVITE_ROLES, ...ADVANCED_INVITE_ROLES] : BASIC_INVITE_ROLES;
 
@@ -46,6 +47,18 @@ export function InviteMemberForm() {
       router.refresh();
     });
   };
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="w-full py-3 text-[14px] font-extrabold rounded-sm"
+        style={{ background: C.kami, border: `1px dashed ${C.usu}`, color: C.sumi }}
+      >
+        ＋ メンバーを招待する
+      </button>
+    );
+  }
 
   return (
     <div>
@@ -79,6 +92,9 @@ export function InviteMemberForm() {
       <Btn tone="ki" onClick={submit} disabled={pending || !email || !name}>
         {pending ? "送信中…" : "招待する"}
       </Btn>
+      <button onClick={() => setOpen(false)} className="text-[11px] mt-2 underline" style={{ color: C.usu }}>
+        やめる
+      </button>
     </div>
   );
 }
