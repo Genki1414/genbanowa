@@ -53,6 +53,7 @@ export function DisputeCard({
   logs,
   side,
   canRequest,
+  canRequestNow,
   canObject,
 }: {
   txId: string;
@@ -60,7 +61,10 @@ export function DisputeCard({
   dispute: DisputeInfo | null;
   logs: DisputeLog[];
   side: "moto" | "uke";
+  /** dispute.request 権限（担当ロールか）。既存disputeへの承諾・運営依頼ボタンの表示に使う。 */
   canRequest: boolean;
+  /** 今この請求書に対して新規に確認依頼を出せるか（権限に加えて期日超過・状態も満たすか）。 */
+  canRequestNow: boolean;
   canObject: boolean;
 }) {
   const router = useRouter();
@@ -86,7 +90,7 @@ export function DisputeCard({
   };
 
   if (!dispute) {
-    if (!(side === "uke" && canRequest)) return null;
+    if (!(side === "uke" && canRequestNow)) return null;
     return (
       <div className="mb-3 -mt-2">
         <Btn tone="aka" disabled={pending} onClick={() => run(() => requestConfirmationAction(txId, invoiceId))}>

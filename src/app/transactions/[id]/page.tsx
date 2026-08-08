@@ -20,6 +20,7 @@ import { currentActor } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { loadTransaction } from "@/lib/supabase/transactionRepo";
 import { loadLatestDisputesForInvoices, loadLogs } from "@/lib/supabase/disputeRepo";
+import { canRequestConfirmation } from "@/domain/transaction/Dispute";
 import { canSeeAmount } from "@/domain/auth/Role";
 import { can } from "@/domain/auth/Permission";
 import { transactionDisplayStatus } from "@/domain/transaction/Transaction";
@@ -82,6 +83,7 @@ export default async function TransactionDetailPage({ params }: { params: Promis
       [...disputeByInvoice.values()].map(async (d) => [d.id, await loadLogs(supabase, d.id)] as const),
     ),
   );
+  const today = new Date().toISOString().slice(0, 10);
 
   return (
     <div className="min-h-screen pb-10" style={{ background: C.yojo }}>
@@ -198,17 +200,24 @@ export default async function TransactionDetailPage({ params }: { params: Promis
                 <ConfirmReceiptButton txId={id} invoiceId={invoice.id} dueDate={invoice.dueDate} />
               )}
             </div>
-            {(canRequestDispute || canObjectDispute) && (
-              <DisputeCard
-                txId={id}
-                invoiceId={invoice.id}
-                dispute={disputeByInvoice.get(invoice.id) ?? null}
-                logs={disputeByInvoice.has(invoice.id) ? (disputeLogs.get(disputeByInvoice.get(invoice.id)!.id) ?? []) : []}
-                side={side}
-                canRequest={canRequestDispute}
-                canObject={canObjectDispute}
-              />
-            )}
+            {(() => {
+              const dispute = disputeByInvoice.get(invoice.id) ?? null;
+              const canRequestNow = canRequestDispute && canRequestConfirmation(invoice.status, invoice.dueDate, today, dispute);
+              if (!dispute && !canRequestNow) return null;
+              if (!canRequestDispute && !canObjectDispute) return null;
+              return (
+                <DisputeCard
+                  txId={id}
+                  invoiceId={invoice.id}
+                  dispute={dispute}
+                  logs={dispute ? (disputeLogs.get(dispute.id) ?? []) : []}
+                  side={side}
+                  canRequest={canRequestDispute}
+                  canRequestNow={canRequestNow}
+                  canObject={canObjectDispute}
+                />
+              );
+            })()}
           </div>
         ))}
         {canInvoice && (
