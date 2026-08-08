@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { currentActor } from "@/lib/auth";
 import { BottomNav } from "@/components/domain/BottomNav";
+import { DevAccountSwitcher } from "@/components/domain/DevAccountSwitcher";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -34,6 +35,7 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col">
         <div className={actor ? "flex-1 pb-14" : "flex-1"}>{children}</div>
         {actor && <BottomNav />}
+        {process.env.NODE_ENV !== "production" && <DevAccountSwitcher />}
       </body>
     </html>
   );
