@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MessageSquare, FileText, Users, Briefcase, Camera } from "lucide-react";
+import { MessageSquare, FileText, Users, Briefcase, Camera, Bell } from "lucide-react";
 import { C } from "@/styles/tokens";
 
-const ICONS = { MessageSquare, FileText, Users, Briefcase, Camera } as const;
+const ICONS = { MessageSquare, FileText, Users, Briefcase, Camera, Bell } as const;
 
 export interface NavTabData {
   key: string;

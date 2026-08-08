@@ -9,6 +9,7 @@ import { Result, ok, err } from "@/domain/shared/result";
 import { can } from "@/domain/auth/Permission";
 import { canRequestConfirmation, canRespond, canAcceptProposedDate, canEscalate } from "@/domain/transaction/Dispute";
 import { fmt } from "@/domain/shared/date";
+import { notify, notifyBoth, companyName } from "@/lib/notifications/notify";
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -32,6 +33,17 @@ export async function requestConfirmationAction(txId: string, invoiceId: string)
   if (error) return err(error.message);
 
   await insertLog(supabase, data.id, "uke", "受注者が入金の確認を依頼しました。");
+
+  const ukeName = await companyName(supabase, tx.ukeCompanyId);
+  await notify({
+    companyId: tx.motoCompanyId,
+    event: "DSP_OPENED",
+    entityType: "dispute",
+    entityId: data.id,
+    vars: { partner: ukeName },
+    linkPath: `/transactions/${txId}`,
+  });
+
   revalidatePath(`/transactions/${txId}`);
   return ok({ disputeId: data.id });
 }
@@ -55,20 +67,46 @@ export async function respondDisputeAction(
   if (!dispute || !tx.invoices.some((i) => i.id === dispute.invoiceId)) return err("DISPUTE_NOT_FOUND");
   if (!canRespond(dispute)) return err("CANNOT_RESPOND");
 
+  const motoName = await companyName(supabase, tx.motoCompanyId);
+
   if (kind === "date") {
     if (!payload.proposedDate) return err("PROPOSED_DATE_REQUIRED");
     const { error } = await respondDispute(supabase, disputeId, "date_proposed", { proposedDate: payload.proposedDate });
     if (error) return err(error.message);
     await insertLog(supabase, disputeId, "moto", `発注者が支払予定日（${fmt(payload.proposedDate)}）を申告しました。`);
+    await notify({
+      companyId: tx.ukeCompanyId,
+      event: "DSP_DATE",
+      entityType: "dispute",
+      entityId: disputeId,
+      vars: { partner: motoName, date: fmt(payload.proposedDate) },
+      linkPath: `/transactions/${txId}`,
+    });
   } else if (kind === "objection") {
     if (!payload.objection?.trim()) return err("OBJECTION_REQUIRED");
     const { error } = await respondDispute(supabase, disputeId, "objected", { objection: payload.objection });
     if (error) return err(error.message);
     await insertLog(supabase, disputeId, "moto", `発注者から異議が出されました：${payload.objection}`);
+    await notify({
+      companyId: tx.ukeCompanyId,
+      event: "DSP_OBJECTED",
+      entityType: "dispute",
+      entityId: disputeId,
+      vars: { partner: motoName },
+      linkPath: `/transactions/${txId}`,
+    });
   } else {
     const { error } = await respondDispute(supabase, disputeId, "confirming");
     if (error) return err(error.message);
     await insertLog(supabase, disputeId, "moto", "発注者が「支払済みです」と回答しました。入金確認をお待ちください。");
+    await notify({
+      companyId: tx.ukeCompanyId,
+      event: "DSP_PAID",
+      entityType: "dispute",
+      entityId: disputeId,
+      vars: { partner: motoName },
+      linkPath: `/transactions/${txId}`,
+    });
   }
 
   revalidatePath(`/transactions/${txId}`);
@@ -93,6 +131,16 @@ export async function acceptProposedDateAction(txId: string, disputeId: string):
   if (error) return err(error.message);
   await insertLog(supabase, disputeId, "uke", `受注者が支払予定日（${fmt(dispute.proposedDate)}）を承諾しました。`);
 
+  await notifyBoth({
+    companyIdA: tx.motoCompanyId,
+    companyIdB: tx.ukeCompanyId,
+    event: "DSP_RESOLVED",
+    entityType: "dispute",
+    entityId: disputeId,
+    vars: {},
+    linkPath: `/transactions/${txId}`,
+  });
+
   revalidatePath(`/transactions/${txId}`);
   return ok(null);
 }
@@ -114,6 +162,16 @@ export async function escalateDisputeAction(txId: string, disputeId: string): Pr
   const { error } = await transitionDispute(supabase, disputeId, "under_review");
   if (error) return err(error.message);
   await insertLog(supabase, disputeId, "uke", "受注者が運営に事実確認を依頼しました。");
+
+  await notifyBoth({
+    companyIdA: tx.motoCompanyId,
+    companyIdB: tx.ukeCompanyId,
+    event: "DSP_ESCALATED",
+    entityType: "dispute",
+    entityId: disputeId,
+    vars: {},
+    linkPath: `/transactions/${txId}`,
+  });
 
   revalidatePath(`/transactions/${txId}`);
   return ok(null);

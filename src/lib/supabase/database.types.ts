@@ -258,6 +258,23 @@ type StandaloneDocumentRow = {
   created_at: string;
 };
 
+type NotificationRow = {
+  id: string;
+  company_id: string;
+  user_id: string | null;
+  event: string;
+  severity: "A" | "B" | "C";
+  entity_type: string;
+  entity_id: string | null;
+  title: string;
+  body: string;
+  link: string;
+  channels: string[];
+  read_at: string | null;
+  sent_at: string | null;
+  created_at: string;
+};
+
 type ScoutRow = {
   id: string;
   from_company: string;
@@ -355,6 +372,18 @@ export type Database = {
         }
       >;
       payment_disputes: Table<PaymentDisputeRow, Partial<PaymentDisputeRow> & { invoice_id: string }>;
+      notifications: Table<
+        NotificationRow,
+        Partial<NotificationRow> & {
+          company_id: string;
+          event: string;
+          severity: "A" | "B" | "C";
+          entity_type: string;
+          title: string;
+          body: string;
+          link: string;
+        }
+      >;
       payment_dispute_logs: Table<
         PaymentDisputeLogRow,
         Partial<PaymentDisputeLogRow> & { dispute_id: string; actor: "uke" | "moto" | "admin" | "system"; text: string }

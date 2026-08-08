@@ -1,6 +1,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "./database.types";
 import { DisputeStatus } from "@/domain/transaction/Dispute";
+import { notifyBoth } from "@/lib/notifications/notify";
 
 export type AdminClient = SupabaseClient<Database>;
 
@@ -10,7 +11,9 @@ export interface AdminDisputeListItem {
   invoiceId: string;
   transactionId: string;
   transactionTitle: string;
+  motoCompanyId: string;
   motoCompanyName: string;
+  ukeCompanyId: string;
   ukeCompanyName: string;
   amount: number;
   tax: number;
@@ -54,7 +57,9 @@ export async function loadDisputesByStatus(admin: AdminClient, statuses: Dispute
         invoiceId: invoice.id,
         transactionId: tx.id,
         transactionTitle: tx.title,
+        motoCompanyId: tx.moto_company,
         motoCompanyName: companyNameById.get(tx.moto_company) ?? "—",
+        ukeCompanyId: tx.uke_company,
         ukeCompanyName: companyNameById.get(tx.uke_company) ?? "—",
         amount: invoice.amount,
         tax: invoice.tax,
@@ -95,7 +100,9 @@ export async function loadDisputeDetail(admin: AdminClient, disputeId: string): 
     invoiceId: invoice.id,
     transactionId: tx.id,
     transactionTitle: tx.title,
+    motoCompanyId: tx.moto_company,
     motoCompanyName: nameById.get(tx.moto_company) ?? "—",
+    ukeCompanyId: tx.uke_company,
     ukeCompanyName: nameById.get(tx.uke_company) ?? "—",
     amount: invoice.amount,
     tax: invoice.tax,
@@ -128,5 +135,26 @@ export async function decideDispute(
     actor: "admin",
     text: decision === "recorded" ? "運営が遅延として記録しました。" : "運営が確認の結果、遅延ではないと判断しました。",
   });
+
+  // 双方に必ず通知する（docs/03_規約・信用情報方針ドラフト.md 4-4章「記録は双方に通知します」）。
+  const { data: dispute } = await admin.from("payment_disputes").select("invoice_id").eq("id", disputeId).maybeSingle();
+  if (dispute) {
+    const { data: invoice } = await admin.from("invoices").select("transaction_id").eq("id", dispute.invoice_id).maybeSingle();
+    if (invoice) {
+      const { data: tx } = await admin.from("transactions").select("moto_company, uke_company").eq("id", invoice.transaction_id).maybeSingle();
+      if (tx) {
+        await notifyBoth({
+          companyIdA: tx.moto_company,
+          companyIdB: tx.uke_company,
+          event: decision === "recorded" ? "DSP_RECORDED" : "DSP_RESOLVED",
+          entityType: "dispute",
+          entityId: disputeId,
+          vars: {},
+          linkPath: `/transactions/${invoice.transaction_id}`,
+        });
+      }
+    }
+  }
+
   return { error: null };
 }

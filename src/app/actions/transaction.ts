@@ -18,6 +18,9 @@ import { can } from "@/domain/auth/Permission";
 import { checkQuota } from "@/domain/plan/Quota";
 import { emptyUsage } from "@/domain/plan/Usage";
 import { getCompanyPlan } from "@/lib/supabase/plan";
+import { notify, companyName } from "@/lib/notifications/notify";
+import { yen } from "@/domain/shared/money";
+import { fmt } from "@/domain/shared/date";
 import {
   Transaction,
   AddOrderInput,
@@ -118,6 +121,16 @@ export async function createTransactionAction(
   // 段階開放：注文書を送ると取引タブが解放される（相手も注文書を扱うので両社解放する）
   await unlockForBoth(supabase, actor.companyId, ukeCompanyId, "transactions");
 
+  const motoName = await companyName(supabase, actor.companyId);
+  await notify({
+    companyId: ukeCompanyId,
+    event: "ORD_ISSUED",
+    entityType: "transaction",
+    entityId: transactionId,
+    vars: { partner: motoName, amount: yen(newOrder.keishiki === "ukeoi" ? newOrder.amount : newOrder.tanka) },
+    linkPath: `/transactions/${transactionId}`,
+  });
+
   revalidatePath("/transactions");
   return ok({ transactionId });
 }
@@ -146,6 +159,16 @@ export async function addOrderAction(txId: string, input: AddOrderInput): Promis
       .eq("id", input.fulfillsRequestId);
   }
 
+  const motoName = await companyName(supabase, tx.motoCompanyId);
+  await notify({
+    companyId: tx.ukeCompanyId,
+    event: input.fulfillsRequestId ? "ORD_REQ_ISSUED" : "ORD_ADD_ISSUED",
+    entityType: "transaction",
+    entityId: txId,
+    vars: { partner: motoName, n: String(newOrder.seq), amount: yen(newOrder.keishiki === "ukeoi" ? newOrder.amount : newOrder.tanka) },
+    linkPath: `/transactions/${txId}`,
+  });
+
   revalidatePath(`/transactions/${txId}`);
   return ok(null);
 }
@@ -165,6 +188,17 @@ export async function acceptOrderAction(txId: string, orderId: string): Promise<
 
   // 段階開放：注文請書を返すと工事写真タブが解放される
   await unlockForBoth(supabase, tx.motoCompanyId, tx.ukeCompanyId, "photos");
+
+  const order = result.value.orders.find((o) => o.id === orderId)!;
+  const ukeName = await companyName(supabase, tx.ukeCompanyId);
+  await notify({
+    companyId: tx.motoCompanyId,
+    event: "ORD_ACCEPTED",
+    entityType: "transaction",
+    entityId: txId,
+    vars: { partner: ukeName, n: String(order.seq) },
+    linkPath: `/transactions/${txId}`,
+  });
 
   revalidatePath(`/transactions/${txId}`);
   return ok(null);
@@ -186,6 +220,17 @@ export async function rejectOrderAction(txId: string, orderId: string, note: str
     .eq("id", orderId);
   if (error) return err(error.message);
 
+  const order = result.value.orders.find((o) => o.id === orderId)!;
+  const ukeName = await companyName(supabase, tx.ukeCompanyId);
+  await notify({
+    companyId: tx.motoCompanyId,
+    event: "ORD_REJECTED",
+    entityType: "transaction",
+    entityId: txId,
+    vars: { partner: ukeName, n: String(order.seq) },
+    linkPath: `/transactions/${txId}`,
+  });
+
   revalidatePath(`/transactions/${txId}`);
   return ok(null);
 }
@@ -206,6 +251,16 @@ export async function requestAdditionalOrderAction(
   const newRequest = result.value.orderRequests[result.value.orderRequests.length - 1];
   const { error } = await insertOrderRequestRow(supabase, txId, newRequest);
   if (error) return err(error.message);
+
+  const ukeName = await companyName(supabase, tx.ukeCompanyId);
+  await notify({
+    companyId: tx.motoCompanyId,
+    event: "ORD_REQ",
+    entityType: "transaction",
+    entityId: txId,
+    vars: { partner: ukeName, content: newRequest.description },
+    linkPath: `/transactions/${txId}`,
+  });
 
   revalidatePath(`/transactions/${txId}`);
   return ok(null);
@@ -246,8 +301,19 @@ export async function submitInvoiceAction(
   const result = tx.submitInvoice(input, actor, now);
   if (!result.ok) return err(result.error);
 
-  const { error } = await insertInvoiceRow(supabase, txId, result.value.invoices[result.value.invoices.length - 1]);
+  const newInvoice = result.value.invoices[result.value.invoices.length - 1];
+  const { error } = await insertInvoiceRow(supabase, txId, newInvoice);
   if (error) return err(error.message);
+
+  const ukeName = await companyName(supabase, tx.ukeCompanyId);
+  await notify({
+    companyId: tx.motoCompanyId,
+    event: "INV_SUBMITTED",
+    entityType: "invoice",
+    entityId: newInvoice.id,
+    vars: { partner: ukeName, amount: yen(newInvoice.amount + newInvoice.tax), date: fmt(newInvoice.dueDate) },
+    linkPath: `/transactions/${txId}`,
+  });
 
   revalidatePath(`/transactions/${txId}`);
   return ok({ overAmount: result.value.overAmount(input.orderId) });
@@ -272,6 +338,16 @@ export async function approveInvoiceAction(txId: string, invoiceId: string): Pro
   const { error } = await supabase.from("invoices").update({ status: "approved", approved_at: now }).eq("id", invoiceId);
   if (error) return err(error.message);
 
+  const invoice = result.value.invoices.find((i) => i.id === invoiceId)!;
+  await notify({
+    companyId: tx.ukeCompanyId,
+    event: "INV_APPROVED",
+    entityType: "invoice",
+    entityId: invoiceId,
+    vars: { date: fmt(invoice.dueDate) },
+    linkPath: `/transactions/${txId}`,
+  });
+
   revalidatePath(`/transactions/${txId}`);
   return ok(null);
 }
@@ -292,6 +368,15 @@ export async function rejectInvoiceAction(txId: string, invoiceId: string, note:
     .eq("id", invoiceId);
   if (error) return err(error.message);
 
+  await notify({
+    companyId: tx.ukeCompanyId,
+    event: "INV_REJECTED",
+    entityType: "invoice",
+    entityId: invoiceId,
+    vars: { reason: note },
+    linkPath: `/transactions/${txId}`,
+  });
+
   revalidatePath(`/transactions/${txId}`);
   return ok(null);
 }
@@ -308,6 +393,16 @@ export async function registerPaymentAction(txId: string, invoiceId: string): Pr
 
   const { error } = await supabase.from("invoices").update({ status: "paid", paid_at: now }).eq("id", invoiceId);
   if (error) return err(error.message);
+
+  const motoName = await companyName(supabase, tx.motoCompanyId);
+  await notify({
+    companyId: tx.ukeCompanyId,
+    event: "PAY_REGISTERED",
+    entityType: "invoice",
+    entityId: invoiceId,
+    vars: { partner: motoName },
+    linkPath: `/transactions/${txId}`,
+  });
 
   revalidatePath(`/transactions/${txId}`);
   return ok(null);
@@ -341,6 +436,16 @@ export async function confirmReceiptAction(
     await insertLog(supabase, openDispute.id, "system", "入金が確認されたため、確認手続きを解決としました。");
   }
 
+  const ukeName = await companyName(supabase, tx.ukeCompanyId);
+  await notify({
+    companyId: tx.motoCompanyId,
+    event: "PAY_CONFIRMED",
+    entityType: "invoice",
+    entityId: invoiceId,
+    vars: { partner: ukeName },
+    linkPath: `/transactions/${txId}`,
+  });
+
   revalidatePath(`/transactions/${txId}`);
   return ok(null);
 }
@@ -360,6 +465,16 @@ export async function requestCompletionAction(txId: string): Promise<Result<null
     .update({ status: "completion_requested" })
     .eq("id", txId);
   if (error) return err(error.message);
+
+  const ukeName = await companyName(supabase, tx.ukeCompanyId);
+  await notify({
+    companyId: tx.motoCompanyId,
+    event: "CMP_REQUESTED",
+    entityType: "transaction",
+    entityId: txId,
+    vars: { partner: ukeName },
+    linkPath: `/transactions/${txId}`,
+  });
 
   revalidatePath(`/transactions/${txId}`);
   return ok(null);
@@ -381,6 +496,15 @@ export async function approveCompletionAction(txId: string): Promise<Result<null
     .update({ status: "completed", completed_at: now })
     .eq("id", txId);
   if (error) return err(error.message);
+
+  await notify({
+    companyId: tx.ukeCompanyId,
+    event: "CMP_APPROVED",
+    entityType: "transaction",
+    entityId: txId,
+    vars: {},
+    linkPath: `/transactions/${txId}`,
+  });
 
   revalidatePath(`/transactions/${txId}`);
   return ok(null);

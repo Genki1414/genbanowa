@@ -1,6 +1,7 @@
 import { currentActor } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { loadConversationList } from "@/lib/supabase/conversationRepo";
+import { unreadCount } from "@/lib/supabase/notificationRepo";
 import { can } from "@/domain/auth/Permission";
 import { BottomNavClient, NavTabData } from "./BottomNavClient";
 
@@ -15,9 +16,10 @@ export async function BottomNav() {
   if (!actor) return null;
 
   const supabase = await createClient();
-  const [{ data: company }, list] = await Promise.all([
+  const [{ data: company }, list, unreadNotifications] = await Promise.all([
     supabase.from("companies").select("unlocked_features").eq("id", actor.companyId).maybeSingle(),
     loadConversationList(supabase, actor.companyId),
+    unreadCount(supabase),
   ]);
 
   const unread = list.reduce((n, c) => n + c.unread, 0);
@@ -28,6 +30,7 @@ export async function BottomNav() {
   const tabs: NavTabData[] = [
     { key: "jobs", label: "案件", href: "/jobs", icon: "Briefcase" },
     { key: "messages", label: "メッセージ", href: "/messages", icon: "MessageSquare", badge: unread },
+    { key: "notifications", label: "通知", href: "/notifications", icon: "Bell", badge: unreadNotifications },
   ];
   if (showTransactions) {
     tabs.push({ key: "transactions", label: "取引", href: "/transactions", icon: "FileText" });
