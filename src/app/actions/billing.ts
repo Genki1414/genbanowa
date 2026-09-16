@@ -5,7 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireActor } from "@/lib/auth";
 import { Result, ok, err } from "@/domain/shared/result";
 import { can } from "@/domain/auth/Permission";
-import { stripe } from "@/lib/stripe/client";
+import { getStripe } from "@/lib/stripe/client";
 import { priceIdForPlan } from "@/lib/stripe/plans";
 import { PlanKey } from "@/domain/plan/Plan";
 
@@ -37,6 +37,7 @@ export async function createCheckoutSessionAction(plan: Exclude<PlanKey, "free">
     return err("ALREADY_SUBSCRIBED");
   }
 
+  const stripe = getStripe();
   const admin = createAdminClient();
   let customerId = company.stripe_customer_id;
   if (!customerId) {
@@ -71,7 +72,7 @@ export async function createPortalSessionAction(): Promise<Result<{ url: string 
   const { data: company } = await supabase.from("companies").select("stripe_customer_id").eq("id", actor.companyId).maybeSingle();
   if (!company?.stripe_customer_id) return err("NO_SUBSCRIPTION");
 
-  const session = await stripe.billingPortal.sessions.create({
+  const session = await getStripe().billingPortal.sessions.create({
     customer: company.stripe_customer_id,
     return_url: `${appUrl()}/me/plan`,
   });
